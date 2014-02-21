@@ -52,7 +52,7 @@ REDUCEVECTORS = True
 SHOWPROGRESS = True
 #some map stuff
 MAPBACKGROUND = None
-RENDERER = "PIL"
+RENDERER = "aggdraw"
 #set mapdims to window size
 mapdimstest = tk.Tk()
 MAPWIDTH = int(mapdimstest.winfo_screenwidth())
