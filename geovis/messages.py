@@ -1,8 +1,6 @@
 # Import main modules
 import sys, pickle, Queue
 # Import custom modules
-scriptspace = "\\".join(sys.argv[0].split("/")[:-1])
-sys.path.append(scriptspace)
 from textual import txt
 import timetaker as timer
 

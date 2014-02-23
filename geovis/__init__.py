@@ -1,16 +1,37 @@
+"""
+Python Geographic Visualizer (GeoVis)
+
+A complete geographic visualization module for the Python programming language
+intended for easy everyday-use by novices and power-programmers alike.
+It has one-liners for quickly visualizing a shapefile,
+building and styling basic maps with multiple shapefile layers,
+and/or saving to imagefiles. Uses the built-in Tkinter
+or other third-party rendering modules to do its main work.
+The current version is functional, but should be considered
+a work in progress with potential bugs, so use with care.
+
+Dependencies: None, but Aggdraw, PIL, or PyCairo is recommended.
+System Compatibility: Python version 2.x and Windows. 
+License: Creative Commons Attribution-ShareAlike (CC BY-SA). For more details see: http://creativecommons.org/licenses/by-sa/4.0/
+
+Author: Karim Bahgat (karim.bahgat.norway<at>gmail.com)
+Homepage: https://github.com/karimbahgat/geovis
+Date: February 21, 2014
+"""
+__version__ = "0.1.0"
+
 # IMPORTS
 #builtins
 import sys, os, itertools, array, threading, random, math
 import Tkinter as tk
 #customized
-custommodulepath = r"C:\Users\BIGKIMO\Desktop\vshapes"
-sys.path.append(custommodulepath)
 import messages
 #third party modules
 import shapefile_fork as pyshp
 import colour
 
 # GLOBAL VARS
+#PyShp shapetype constants
 NULL = 0
 POINT = 1
 POLYLINE = 3
@@ -25,7 +46,7 @@ POLYLINEM = 23
 POLYGONM = 25
 MULTIPOINTM = 28
 MULTIPATCH = 31
-
+#PyShp shapetypes as text
 PYSHPTYPE_AS_TEXT = {\
     NULL:"Null",
     POINT:"Point",
@@ -41,25 +62,36 @@ PYSHPTYPE_AS_TEXT = {\
     MULTIPOINTZ:"MultiPointZ",
     MULTIPOINTM:"MultiPointM",
     MULTIPATCH:"MultiPatch"}
-
+#default rendering options
 try:
     import numpy
     NUMPYSPEED = True
 except:
     NUMPYSPEED = False
-REDUCEVECTORS = True
-
+REDUCEVECTORS = False
 SHOWPROGRESS = True
 #some map stuff
 MAPBACKGROUND = None
-RENDERER = "aggdraw"
+try:
+    import aggdraw
+    RENDERER = "aggdraw"
+except:
+    try:
+        import PIL
+        RENDERER = "PIL"
+    except:
+        try:
+            import cairo
+            RENDERER = "pycairo"
+        except:
+            RENDERER = "tkinter"
 #set mapdims to window size
 mapdimstest = tk.Tk()
 MAPWIDTH = int(mapdimstest.winfo_screenwidth())
 MAPHEIGHT = int(mapdimstest.winfo_screenheight())
 mapdimstest.destroy()
 del mapdimstest
-
+#update mapdims
 def _UpdateMapDims():
     if NUMPYSPEED:
         global ZOOMDIM, OFFSET, TRANSLATION, RENDERAREA, SCALING
@@ -75,7 +107,7 @@ def _UpdateMapDims():
         XWIDTH = 360
         YHEIGHT = 180
 _UpdateMapDims()
-
+#define colorstyles
 COLORSTYLES = dict([("strong", dict( [("intensity",1), ("brightness",0.5)]) ),
                     ("dark", dict( [("intensity",0.8), ("brightness",0.2)]) ),
                     ("matte", dict( [("intensity",0.4), ("brightness",0.2)]) ),
@@ -643,27 +675,27 @@ def _FolderLoop(folder, filetype=""):
                 eachfiletype = "." + eachfile.split(".")[-1]
                 yield (eachdir, eachfilename, eachfiletype)
 def ShapefileFolder(folder):
-    "Returns a generator that will loop through a folder and all its subfolder and return information of every shapefile it finds. Information returned is a tuple with the following elements (string name of current subfolder, string name of shapefile found, string of the shapefile's file extension(will always be '.shp'))\
-    -folder is a path string of the folder to check for shapefiles."
+    """Returns a generator that will loop through a folder and all its subfolder and return information of every shapefile it finds. Information returned is a tuple with the following elements (string name of current subfolder, string name of shapefile found, string of the shapefile's file extension(will always be '.shp'))\
+    -folder is a path string of the folder to check for shapefiles."""
     for eachfolder, eachshapefile, eachfiletype in _FolderLoop(folder, filetype=".shp"):
         yield (eachfolder, eachshapefile, eachfiletype)
         
 #RENDERING OPTIONS
-def SetRenderingOptions(**renderoptions):
-    "Sets certain rendering options that apply to all visualizations or map images.\
-    -renderer is a string describing which Python module will be used for rendering. This means you need to have the specified module installed. Valid renderer values are 'tkinter', 'PIL', 'aggdraw', 'pycairo'. Notes: If you have no renderers installed, then use Tkinter which comes with all Python installations, although it is significantly slow, memory-limited, and cannot be used to save images. Currently PyCairo is not very well optimized, and is particularly slow to render line shapefiles. \
-    -numpyspeed specifies whether to use numpy to speed up shapefile reading and coordinate-to-pixel conversion. Must be True or False.\
-    -reducevectors specifies whether to reduce the number of vectors to be rendered. This can speed up rendering time, but may lower the quality of the rendered image, especially for line shapefiles. " 
-    if renderoptions.get("renderer", "not found") != "not found":
+def SetRenderingOptions(renderer="not set", numpyspeed="not set", reducevectors="not set"):
+    """Sets certain rendering options that apply to all visualizations or map images.
+    -renderer is a string describing which Python module will be used for rendering. This means you need to have the specified module installed. Valid renderer values are 'aggdraw' (default), 'PIL', 'pycairo', 'tkinter'. Notes: If you have no renderers installed, then use Tkinter which comes with all Python installations, be aware that it is significantly slow, memory-limited, and cannot be used to save images. Currently PyCairo is not very well optimized, and is particularly slow to render line shapefiles. 
+    -numpyspeed specifies whether to use numpy to speed up shapefile reading and coordinate-to-pixel conversion. Must be True (default) or False.
+    -reducevectors specifies whether to reduce the number of vectors to be rendered. This can speed up rendering time, but may lower the quality of the rendered image, especially for line shapefiles. Must be True or False (default)."""
+    if renderer != "not set":
         global RENDERER
-        RENDERER = renderoptions["renderer"]
-    if renderoptions.get("numpyspeed", "not found") != "not found":
+        RENDERER = renderer
+    if numpyspeed != "not set":
         global NUMPYSPEED
-        NUMPYSPEED = renderoptions["numpyspeed"]
+        NUMPYSPEED = numpyspeed
         _UpdateMapDims() #this bc map dimensions have to be recalculated to/from numpyspeed format
-    if renderoptions.get("reducevectors", "not found") != "not found":
+    if reducevectors != "not set":
         global REDUCEVECTORS
-        REDUCEVECTORS = renderoptions["reducevectors"]
+        REDUCEVECTORS = reducevectors
         
 #STYLE CUSTOMIZING
 DEFAULTCOLOR = dict([("basecolor","random"),
@@ -671,16 +703,17 @@ DEFAULTCOLOR = dict([("basecolor","random"),
                        ("brightness","random"),
                        ("style",None)
                        ])
-def SetMapColors(**optionstochange):
-    "Sets the default style options that will be used to visualize shapefiles. These default options will only be used for those options of a shapefile that the user has not already specified.\
-    -customoptions is any series of named arguments of how to style the shapefile visualization (optional)"
+def _SetMapColors(**optionstochange):
+    """Sets the default symbol options that will be used to visualize shapefiles. These default options will only be used for those options of a shapefile that the user has not already specified.
+    -customoptions are named arguments specifying the map's default symbol options. Valid arguments are: fillcolor, fillsize (determines circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth."""
     for eachoption, newvalue in optionstochange.iteritems():
         DEFAULTOPTIONS[eachoption] = newvalue
 def Color(basecolor="random", intensity="random", brightness="random", style=None):
-    "Returns a hex color string of the color options specified. \
-    -basecolor is the human-like name of a color.\
-    -intensity of how strong the color should be. Must be a float between 0 and 1.\
-    -brightness of how light or dark the color should be. Must be a float between 0 and 1."
+    """Returns a hex color string of the color options specified.
+    -basecolor is the human-like name of a color.
+    -intensity of how strong the color should be. Must be a float between 0 and 1 (default is random).
+    -brightness of how light or dark the color should be. Must be a float between 0 and 1 (default is random).
+    -style is a named style that overrides the brightness and intensity options (optional). Valid style names are: strong', 'dark', 'matte', 'bright', 'pastelle'."""
     #first check on intens/bright
     if style:
         #style overrides manual intensity and brightness options
@@ -706,84 +739,80 @@ def Color(basecolor="random", intensity="random", brightness="random", style=Non
     else:
         return colour.Color(color=basecolor, saturation=intensity, luminance=brightness).hex
 
-def ColorFeeder(**coloroptions):
+def _ColorFeeder(**coloroptions):
     """Returns an infinite generator of colors of a specified style. To generate a new color of the specified color options use the generator as an argument to the next() method or loop through it.\
     -coloroptions is any series of named arguments to specify aspects of a color style. See the Color object documentation."""
     while True:
         value = Color(**coloroptions)
         yield value
 
-DEFAULTOPTIONS = dict([("fillcolor",Color()),
-                       ("fillsize",3),
-                       ("outlinecolor",Color()),
-                       ("outlinewidth",1.5)
-                       ])
-def SetMapSymbols(**optionstochange):
-    "Sets the default style options that will be used to visualize shapefiles. These default options will only be used for those options of a shapefile that the user has not already specified.\
-    -customoptions is any series of named arguments of how to style the shapefile visualization (optional)"
+def _SetMapSymbols(**optionstochange):
+    """Sets the default style options that will be used to visualize shapefiles. These default options will only be used for those options of a shapefile that the user has not already specified.\
+    -customoptions are named arguments specifying the map's default symbol options. Valid arguments are: fillcolor, fillsize (determines the circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth."""
     for eachoption, newvalue in optionstochange.iteritems():
         DEFAULTOPTIONS[eachoption] = newvalue
 def _CheckOptions(customoptions):
     if not customoptions.get("fillcolor"):
-        customoptions["fillcolor"] = DEFAULTOPTIONS["fillcolor"]
+        customoptions["fillcolor"] = Color()
     if not customoptions.get("fillsize"):
-        customoptions["fillsize"] = DEFAULTOPTIONS["fillsize"]
+        customoptions["fillsize"] = 7
     if not customoptions.get("outlinecolor"):
-        customoptions["outlinecolor"] = DEFAULTOPTIONS["outlinecolor"]
+        customoptions["outlinecolor"] = Color("black")
     if not customoptions.get("outlinewidth"):
-        customoptions["outlinewidth"] = DEFAULTOPTIONS["outlinewidth"]
+        customoptions["outlinewidth"] = 1.6
     return customoptions
 
 #QUICK TASKS
 def ViewShapefile(shapefilepath, **customoptions):
-    "Quick task to visualize a shapefile and show it in a Tkinter window.\
-    -shapefilepath is the path string of the shapefile.\
-    -customoptions is any series of named arguments of how to style the shapefile visualization (optional)"
+    """Quick task to visualize a shapefile and show it in a Tkinter window.
+    -shapefilepath is the path string of the shapefile.
+    -customoptions is any series of named arguments of how to style the shapefile visualization (optional). Valid arguments are: fillcolor, fillsize (determines the circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth."""
     customoptions = _CheckOptions(customoptions)
     renderer = _Renderer()
     renderer.ViewShapefile(shapefilepath, customoptions)
 def SaveShapefileImage(shapefilepath, savepath, **customoptions):
-    "Quick task to save a shapefile to an image.\
-    -shapefilepath is the path string of the shapefile.\
-    -savepath is the path string of where to save the image, including the image type extension.\
-    -customoptions is any series of named arguments of how to style the shapefile visualization (optional)"
+    """Quick task to save a shapefile to an image.
+    -shapefilepath is the path string of the shapefile.
+    -savepath is the path string of where to save the image, including the image type extension.
+    -customoptions is any series of named arguments of how to style the shapefile visualization (optional). Valid arguments are: fillcolor, fillsize (determines the circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth."""
     customoptions = _CheckOptions(customoptions)
     renderer = _Renderer()
     renderer.SaveShapefileImage(shapefilepath, savepath, customoptions)
 
 #MAP BUILDING
 class NewMap:
-    "Creates and returns a new map based on previously defined mapsettings."
+    """Creates and returns a new map based on previously defined mapsettings."""
     def __init__(self):
         self.renderer = _Renderer()
     def AddToMap(self, shapefilepath, **customoptions):
-        "Add a shapefile to the map.\
-        -shapefilepath is the path string of the shapefile to add."
+        """Add a shapefile to the map.
+        -shapefilepath is the path string of the shapefile to add.
+        -customoptions is any series of named arguments of how to style the shapefile visualization (optional). Valid arguments are: fillcolor, fillsize (determines the circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth."""
         customoptions = _CheckOptions(customoptions)
         self.renderer._RenderShapefile(shapefilepath, customoptions)
     def ViewMap(self):
-        "View the created map in a Tkinter window"
+        """View the created map embedded in a Tkinter window. Map image can be panned, but not zoomed. Offers a 'save image' button to allow to interactively save the image"""
         self.renderer._ViewRenderedShapefile()
     def SaveMap(self, savepath):
-        "Save the map to an image file.\
-        -savepath is the string path for where you wish to save the map image. Image type extension must be specified ('.png','.gif',...)"
+        """Save the map to an image file.
+        -savepath is the string path for where you wish to save the map image. Image type extension must be specified ('.png','.gif',...)"""
         self.renderer._SaveRenderedShapefile(savepath)
 
 #MAP SPECS  
 def SetMapDimensions(width, height):
-    "Sets the width and height of the next map. At startup the width and height are set to the dimensions of the window screen.\
-    -width/height must be integers."
+    """Sets the width and height of the next map. At startup the width and height are set to the dimensions of the window screen.
+    -width/height must be integers."""
     global MAPWIDTH, MAPHEIGHT
     MAPWIDTH = width
     MAPHEIGHT = height
     _UpdateMapDims()
 def SetMapBackground(mapbackground):
-    "Sets the mapbackground of the next map to be made. At startup the mapbackground is transparent (None).\
-    -mapbackground takes a hex color string, as can be created with the Color function. It can also be None for a transparent background."
+    """Sets the mapbackground of the next map to be made. At startup the mapbackground is transparent (None).
+    -mapbackground takes a hex color string, as can be created with the Color function. It can also be None for a transparent background (default)."""
     global MAPBACKGROUND
     MAPBACKGROUND = mapbackground
 def SetZoomExtent():
-    "Not yet in use, and will not still create entire image..."
+    """Not yet in use, and will not still create entire image..."""
     if NUMPYSPEED:
         pass
     else:
@@ -793,3 +822,4 @@ def SetZoomExtent():
 
 ### END OF SCRIPT ###
 
+    

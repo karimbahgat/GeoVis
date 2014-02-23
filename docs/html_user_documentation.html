@@ -1,0 +1,139 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: package geovis</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>geovis</strong></big></big> (version 0.1.0)</font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:///C:/users/bigkimo/documents/github/geovis/geovis/__init__.py">c:\users\bigkimo\documents\github\geovis\geovis\__init__.py</a></font></td></tr></table>
+    <p><tt>Python&nbsp;Geographic&nbsp;Visualizer&nbsp;(GeoVis)<br>
+&nbsp;<br>
+A&nbsp;complete&nbsp;geographic&nbsp;visualization&nbsp;module&nbsp;for&nbsp;the&nbsp;Python&nbsp;programming&nbsp;language<br>
+intended&nbsp;for&nbsp;easy&nbsp;everyday-use&nbsp;by&nbsp;novices&nbsp;and&nbsp;power-programmers&nbsp;alike.<br>
+It&nbsp;has&nbsp;one-liners&nbsp;for&nbsp;quickly&nbsp;visualizing&nbsp;a&nbsp;shapefile,<br>
+building&nbsp;and&nbsp;styling&nbsp;basic&nbsp;maps&nbsp;with&nbsp;multiple&nbsp;shapefile&nbsp;layers,<br>
+and/or&nbsp;saving&nbsp;to&nbsp;imagefiles.&nbsp;Uses&nbsp;the&nbsp;built-in&nbsp;Tkinter<br>
+or&nbsp;other&nbsp;third-party&nbsp;rendering&nbsp;modules&nbsp;to&nbsp;do&nbsp;its&nbsp;main&nbsp;work.<br>
+The&nbsp;current&nbsp;version&nbsp;is&nbsp;functional,&nbsp;but&nbsp;should&nbsp;be&nbsp;considered<br>
+a&nbsp;work&nbsp;in&nbsp;progress&nbsp;with&nbsp;potential&nbsp;bugs,&nbsp;so&nbsp;use&nbsp;with&nbsp;care.<br>
+&nbsp;<br>
+Dependencies:&nbsp;None,&nbsp;but&nbsp;Aggdraw,&nbsp;PIL,&nbsp;or&nbsp;PyCairo&nbsp;is&nbsp;recommended.<br>
+System&nbsp;Compatibility:&nbsp;Python&nbsp;version&nbsp;2.x&nbsp;and&nbsp;Windows.&nbsp;<br>
+License:&nbsp;Creative&nbsp;Commons&nbsp;Attribution-ShareAlike&nbsp;(CC&nbsp;BY-SA).&nbsp;For&nbsp;more&nbsp;details&nbsp;see:&nbsp;<a href="http://creativecommons.org/licenses/by-sa/4.0/">http://creativecommons.org/licenses/by-sa/4.0/</a><br>
+&nbsp;<br>
+Author:&nbsp;Karim&nbsp;Bahgat&nbsp;(karim.bahgat.norway&lt;at&gt;gmail.com)<br>
+Homepage:&nbsp;https://github.com/karimbahgat/geovis<br>
+Date:&nbsp;February&nbsp;21,&nbsp;2014</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Package Contents</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="geovis.colour.html">colour</a><br>
+<a href="geovis.messages.html">messages</a><br>
+</td><td width="25%" valign=top><a href="geovis.shapefile_fork.html">shapefile_fork</a><br>
+<a href="geovis.textual.html">textual</a><br>
+</td><td width="25%" valign=top><a href="geovis.timetaker.html">timetaker</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="geovis.html#NewMap">NewMap</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="NewMap">class <strong>NewMap</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Creates&nbsp;and&nbsp;returns&nbsp;a&nbsp;new&nbsp;map&nbsp;based&nbsp;on&nbsp;previously&nbsp;defined&nbsp;mapsettings.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="NewMap-AddToMap"><strong>AddToMap</strong></a>(self, shapefilepath, **customoptions)</dt><dd><tt>Add&nbsp;a&nbsp;shapefile&nbsp;to&nbsp;the&nbsp;map.<br>
+-shapefilepath&nbsp;is&nbsp;the&nbsp;path&nbsp;string&nbsp;of&nbsp;the&nbsp;shapefile&nbsp;to&nbsp;add.<br>
+-customoptions&nbsp;is&nbsp;any&nbsp;series&nbsp;of&nbsp;named&nbsp;arguments&nbsp;of&nbsp;how&nbsp;to&nbsp;style&nbsp;the&nbsp;shapefile&nbsp;visualization&nbsp;(optional).&nbsp;Valid&nbsp;arguments&nbsp;are:&nbsp;fillcolor,&nbsp;fillsize&nbsp;(determines&nbsp;the&nbsp;circle&nbsp;size&nbsp;for&nbsp;point&nbsp;shapefiles,&nbsp;line&nbsp;width&nbsp;for&nbsp;line&nbsp;shapefiles,&nbsp;and&nbsp;has&nbsp;no&nbsp;effect&nbsp;for&nbsp;polygon&nbsp;shapefiles),&nbsp;outlinecolor,&nbsp;outlinewidth.</tt></dd></dl>
+
+<dl><dt><a name="NewMap-SaveMap"><strong>SaveMap</strong></a>(self, savepath)</dt><dd><tt>Save&nbsp;the&nbsp;map&nbsp;to&nbsp;an&nbsp;image&nbsp;file.<br>
+-savepath&nbsp;is&nbsp;the&nbsp;string&nbsp;path&nbsp;for&nbsp;where&nbsp;you&nbsp;wish&nbsp;to&nbsp;save&nbsp;the&nbsp;map&nbsp;image.&nbsp;Image&nbsp;type&nbsp;extension&nbsp;must&nbsp;be&nbsp;specified&nbsp;('.png','.gif',...)</tt></dd></dl>
+
+<dl><dt><a name="NewMap-ViewMap"><strong>ViewMap</strong></a>(self)</dt><dd><tt>View&nbsp;the&nbsp;created&nbsp;map&nbsp;embedded&nbsp;in&nbsp;a&nbsp;Tkinter&nbsp;window.&nbsp;Map&nbsp;image&nbsp;can&nbsp;be&nbsp;panned,&nbsp;but&nbsp;not&nbsp;zoomed.&nbsp;Offers&nbsp;a&nbsp;'save&nbsp;image'&nbsp;button&nbsp;to&nbsp;allow&nbsp;to&nbsp;interactively&nbsp;save&nbsp;the&nbsp;image</tt></dd></dl>
+
+<dl><dt><a name="NewMap-__init__"><strong>__init__</strong></a>(self)</dt></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-Color"><strong>Color</strong></a>(basecolor<font color="#909090">='random'</font>, intensity<font color="#909090">='random'</font>, brightness<font color="#909090">='random'</font>, style<font color="#909090">=None</font>)</dt><dd><tt>Returns&nbsp;a&nbsp;hex&nbsp;color&nbsp;string&nbsp;of&nbsp;the&nbsp;color&nbsp;options&nbsp;specified.<br>
+-basecolor&nbsp;is&nbsp;the&nbsp;human-like&nbsp;name&nbsp;of&nbsp;a&nbsp;color.<br>
+-intensity&nbsp;of&nbsp;how&nbsp;strong&nbsp;the&nbsp;color&nbsp;should&nbsp;be.&nbsp;Must&nbsp;be&nbsp;a&nbsp;float&nbsp;between&nbsp;0&nbsp;and&nbsp;1&nbsp;(default&nbsp;is&nbsp;random).<br>
+-brightness&nbsp;of&nbsp;how&nbsp;light&nbsp;or&nbsp;dark&nbsp;the&nbsp;color&nbsp;should&nbsp;be.&nbsp;Must&nbsp;be&nbsp;a&nbsp;float&nbsp;between&nbsp;0&nbsp;and&nbsp;1&nbsp;(default&nbsp;is&nbsp;random).<br>
+-style&nbsp;is&nbsp;a&nbsp;named&nbsp;style&nbsp;that&nbsp;overrides&nbsp;the&nbsp;brightness&nbsp;and&nbsp;intensity&nbsp;options&nbsp;(optional).&nbsp;Valid&nbsp;style&nbsp;names&nbsp;are:&nbsp;strong',&nbsp;'dark',&nbsp;'matte',&nbsp;'bright',&nbsp;'pastelle'.</tt></dd></dl>
+ <dl><dt><a name="-SaveShapefileImage"><strong>SaveShapefileImage</strong></a>(shapefilepath, savepath, **customoptions)</dt><dd><tt>Quick&nbsp;task&nbsp;to&nbsp;save&nbsp;a&nbsp;shapefile&nbsp;to&nbsp;an&nbsp;image.<br>
+-shapefilepath&nbsp;is&nbsp;the&nbsp;path&nbsp;string&nbsp;of&nbsp;the&nbsp;shapefile.<br>
+-savepath&nbsp;is&nbsp;the&nbsp;path&nbsp;string&nbsp;of&nbsp;where&nbsp;to&nbsp;save&nbsp;the&nbsp;image,&nbsp;including&nbsp;the&nbsp;image&nbsp;type&nbsp;extension.<br>
+-customoptions&nbsp;is&nbsp;any&nbsp;series&nbsp;of&nbsp;named&nbsp;arguments&nbsp;of&nbsp;how&nbsp;to&nbsp;style&nbsp;the&nbsp;shapefile&nbsp;visualization&nbsp;(optional).&nbsp;Valid&nbsp;arguments&nbsp;are:&nbsp;fillcolor,&nbsp;fillsize&nbsp;(determines&nbsp;the&nbsp;circle&nbsp;size&nbsp;for&nbsp;point&nbsp;shapefiles,&nbsp;line&nbsp;width&nbsp;for&nbsp;line&nbsp;shapefiles,&nbsp;and&nbsp;has&nbsp;no&nbsp;effect&nbsp;for&nbsp;polygon&nbsp;shapefiles),&nbsp;outlinecolor,&nbsp;outlinewidth.</tt></dd></dl>
+ <dl><dt><a name="-SetMapBackground"><strong>SetMapBackground</strong></a>(mapbackground)</dt><dd><tt>Sets&nbsp;the&nbsp;mapbackground&nbsp;of&nbsp;the&nbsp;next&nbsp;map&nbsp;to&nbsp;be&nbsp;made.&nbsp;At&nbsp;startup&nbsp;the&nbsp;mapbackground&nbsp;is&nbsp;transparent&nbsp;(None).<br>
+-mapbackground&nbsp;takes&nbsp;a&nbsp;hex&nbsp;color&nbsp;string,&nbsp;as&nbsp;can&nbsp;be&nbsp;created&nbsp;with&nbsp;the&nbsp;Color&nbsp;function.&nbsp;It&nbsp;can&nbsp;also&nbsp;be&nbsp;None&nbsp;for&nbsp;a&nbsp;transparent&nbsp;background&nbsp;(default).</tt></dd></dl>
+ <dl><dt><a name="-SetMapDimensions"><strong>SetMapDimensions</strong></a>(width, height)</dt><dd><tt>Sets&nbsp;the&nbsp;width&nbsp;and&nbsp;height&nbsp;of&nbsp;the&nbsp;next&nbsp;map.&nbsp;At&nbsp;startup&nbsp;the&nbsp;width&nbsp;and&nbsp;height&nbsp;are&nbsp;set&nbsp;to&nbsp;the&nbsp;dimensions&nbsp;of&nbsp;the&nbsp;window&nbsp;screen.<br>
+-width/height&nbsp;must&nbsp;be&nbsp;integers.</tt></dd></dl>
+ <dl><dt><a name="-SetRenderingOptions"><strong>SetRenderingOptions</strong></a>(renderer<font color="#909090">='not set'</font>, numpyspeed<font color="#909090">='not set'</font>, reducevectors<font color="#909090">='not set'</font>)</dt><dd><tt>Sets&nbsp;certain&nbsp;rendering&nbsp;options&nbsp;that&nbsp;apply&nbsp;to&nbsp;all&nbsp;visualizations&nbsp;or&nbsp;map&nbsp;images.<br>
+-renderer&nbsp;is&nbsp;a&nbsp;string&nbsp;describing&nbsp;which&nbsp;Python&nbsp;module&nbsp;will&nbsp;be&nbsp;used&nbsp;for&nbsp;rendering.&nbsp;This&nbsp;means&nbsp;you&nbsp;need&nbsp;to&nbsp;have&nbsp;the&nbsp;specified&nbsp;module&nbsp;installed.&nbsp;Valid&nbsp;renderer&nbsp;values&nbsp;are&nbsp;'aggdraw'&nbsp;(default),&nbsp;'PIL',&nbsp;'pycairo',&nbsp;'tkinter'.&nbsp;Notes:&nbsp;If&nbsp;you&nbsp;have&nbsp;no&nbsp;renderers&nbsp;installed,&nbsp;then&nbsp;use&nbsp;Tkinter&nbsp;which&nbsp;comes&nbsp;with&nbsp;all&nbsp;Python&nbsp;installations,&nbsp;be&nbsp;aware&nbsp;that&nbsp;it&nbsp;is&nbsp;significantly&nbsp;slow,&nbsp;memory-limited,&nbsp;and&nbsp;cannot&nbsp;be&nbsp;used&nbsp;to&nbsp;save&nbsp;images.&nbsp;Currently&nbsp;PyCairo&nbsp;is&nbsp;not&nbsp;very&nbsp;well&nbsp;optimized,&nbsp;and&nbsp;is&nbsp;particularly&nbsp;slow&nbsp;to&nbsp;render&nbsp;line&nbsp;shapefiles.&nbsp;<br>
+-numpyspeed&nbsp;specifies&nbsp;whether&nbsp;to&nbsp;use&nbsp;numpy&nbsp;to&nbsp;speed&nbsp;up&nbsp;shapefile&nbsp;reading&nbsp;and&nbsp;coordinate-to-pixel&nbsp;conversion.&nbsp;Must&nbsp;be&nbsp;True&nbsp;(default)&nbsp;or&nbsp;False.<br>
+-reducevectors&nbsp;specifies&nbsp;whether&nbsp;to&nbsp;reduce&nbsp;the&nbsp;number&nbsp;of&nbsp;vectors&nbsp;to&nbsp;be&nbsp;rendered.&nbsp;This&nbsp;can&nbsp;speed&nbsp;up&nbsp;rendering&nbsp;time,&nbsp;but&nbsp;may&nbsp;lower&nbsp;the&nbsp;quality&nbsp;of&nbsp;the&nbsp;rendered&nbsp;image,&nbsp;especially&nbsp;for&nbsp;line&nbsp;shapefiles.&nbsp;Must&nbsp;be&nbsp;True&nbsp;or&nbsp;False&nbsp;(default).</tt></dd></dl>
+ <dl><dt><a name="-SetZoomExtent"><strong>SetZoomExtent</strong></a>()</dt><dd><tt>Not&nbsp;yet&nbsp;in&nbsp;use,&nbsp;and&nbsp;will&nbsp;not&nbsp;still&nbsp;create&nbsp;entire&nbsp;image...</tt></dd></dl>
+ <dl><dt><a name="-ShapefileFolder"><strong>ShapefileFolder</strong></a>(folder)</dt><dd><tt>Returns&nbsp;a&nbsp;generator&nbsp;that&nbsp;will&nbsp;loop&nbsp;through&nbsp;a&nbsp;folder&nbsp;and&nbsp;all&nbsp;its&nbsp;subfolder&nbsp;and&nbsp;return&nbsp;information&nbsp;of&nbsp;every&nbsp;shapefile&nbsp;it&nbsp;finds.&nbsp;Information&nbsp;returned&nbsp;is&nbsp;a&nbsp;tuple&nbsp;with&nbsp;the&nbsp;following&nbsp;elements&nbsp;(string&nbsp;name&nbsp;of&nbsp;current&nbsp;subfolder,&nbsp;string&nbsp;name&nbsp;of&nbsp;shapefile&nbsp;found,&nbsp;string&nbsp;of&nbsp;the&nbsp;shapefile's&nbsp;file&nbsp;extension(will&nbsp;always&nbsp;be&nbsp;'.shp'))&nbsp;&nbsp;&nbsp;&nbsp;-folder&nbsp;is&nbsp;a&nbsp;path&nbsp;string&nbsp;of&nbsp;the&nbsp;folder&nbsp;to&nbsp;check&nbsp;for&nbsp;shapefiles.</tt></dd></dl>
+ <dl><dt><a name="-ViewShapefile"><strong>ViewShapefile</strong></a>(shapefilepath, **customoptions)</dt><dd><tt>Quick&nbsp;task&nbsp;to&nbsp;visualize&nbsp;a&nbsp;shapefile&nbsp;and&nbsp;show&nbsp;it&nbsp;in&nbsp;a&nbsp;Tkinter&nbsp;window.<br>
+-shapefilepath&nbsp;is&nbsp;the&nbsp;path&nbsp;string&nbsp;of&nbsp;the&nbsp;shapefile.<br>
+-customoptions&nbsp;is&nbsp;any&nbsp;series&nbsp;of&nbsp;named&nbsp;arguments&nbsp;of&nbsp;how&nbsp;to&nbsp;style&nbsp;the&nbsp;shapefile&nbsp;visualization&nbsp;(optional).&nbsp;Valid&nbsp;arguments&nbsp;are:&nbsp;fillcolor,&nbsp;fillsize&nbsp;(determines&nbsp;the&nbsp;circle&nbsp;size&nbsp;for&nbsp;point&nbsp;shapefiles,&nbsp;line&nbsp;width&nbsp;for&nbsp;line&nbsp;shapefiles,&nbsp;and&nbsp;has&nbsp;no&nbsp;effect&nbsp;for&nbsp;polygon&nbsp;shapefiles),&nbsp;outlinecolor,&nbsp;outlinewidth.</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>COLORSTYLES</strong> = {'bright': {'brightness': 0.69999999999999996, 'intensity': 0.80000000000000004}, 'dark': {'brightness': 0.20000000000000001, 'intensity': 0.80000000000000004}, 'matte': {'brightness': 0.20000000000000001, 'intensity': 0.40000000000000002}, 'pastelle': {'brightness': 0.59999999999999998, 'intensity': 0.5}, 'strong': {'brightness': 0.5, 'intensity': 1}}<br>
+<strong>DEFAULTCOLOR</strong> = {'basecolor': 'random', 'brightness': 'random', 'intensity': 'random', 'style': None}<br>
+<strong>MAPBACKGROUND</strong> = None<br>
+<strong>MAPHEIGHT</strong> = 720<br>
+<strong>MAPWIDTH</strong> = 1280<br>
+<strong>MULTIPATCH</strong> = 31<br>
+<strong>MULTIPOINT</strong> = 8<br>
+<strong>MULTIPOINTM</strong> = 28<br>
+<strong>MULTIPOINTZ</strong> = 18<br>
+<strong>NULL</strong> = 0<br>
+<strong>NUMPYSPEED</strong> = True<br>
+<strong>OFFSET</strong> = array([-0., -0.])<br>
+<strong>POINT</strong> = 1<br>
+<strong>POINTM</strong> = 21<br>
+<strong>POINTZ</strong> = 11<br>
+<strong>POLYGON</strong> = 5<br>
+<strong>POLYGONM</strong> = 25<br>
+<strong>POLYGONZ</strong> = 15<br>
+<strong>POLYLINE</strong> = 3<br>
+<strong>POLYLINEM</strong> = 23<br>
+<strong>POLYLINEZ</strong> = 13<br>
+<strong>PYSHPTYPE_AS_TEXT</strong> = {0: 'Null', 1: 'Point', 3: 'PolyLine', 5: 'Polygon', 8: 'MultiPoint', 11: 'PointZ', 13: 'PolyLineZ', 15: 'PolygonZ', 18: 'MultiPointZ', 21: 'PointM', ...}<br>
+<strong>REDUCEVECTORS</strong> = False<br>
+<strong>RENDERAREA</strong> = array([1280, -720])<br>
+<strong>RENDERER</strong> = 'aggdraw'<br>
+<strong>SCALING</strong> = array([ 3.55555556, -4.        ])<br>
+<strong>SHOWPROGRESS</strong> = True<br>
+<strong>TRANSLATION</strong> = array([ 180.,  -90.])<br>
+<strong>ZOOMDIM</strong> = array([ 360.,  180.])<br>
+<strong>__version__</strong> = '0.1.0'</td></tr></table>
+</body></html>

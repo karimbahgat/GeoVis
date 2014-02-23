@@ -1,0 +1,10 @@
+NEXT UP:
+
+- Add support for viewing shapefiles with the PyCairo renderer.
+- Add some example scripts?
+
+LONG TERM:
+
+- Add an easy way for the user to automatically classify and visualize individual shapefile features based on their underlying data values. 
+- Add ability to zoom in to a certain extent instead of showing the entire world. 
+- Add support for projected shapefiles and to change coordinate system/projection of your map. 
