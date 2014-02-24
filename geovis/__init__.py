@@ -759,7 +759,7 @@ def _CheckOptions(customoptions):
     if not customoptions.get("outlinecolor"):
         customoptions["outlinecolor"] = Color("black")
     if not customoptions.get("outlinewidth"):
-        customoptions["outlinewidth"] = 1.6
+        customoptions["outlinewidth"] = 1
     return customoptions
 
 #QUICK TASKS

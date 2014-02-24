@@ -1,10 +1,19 @@
 NEXT UP:
 
+- Cleanup README again espec at top, add multilevel contents links, usage instead of basic usage, and maybe documentation at bottom instead of in wiki, write own script to generate docs, and add contributing guidelines at very bottom.
 - Add support for viewing shapefiles with the PyCairo renderer.
 - Add some example scripts?
+- Add simple support for Python 3
+- Add simple way to render map title, default font, and place it to relative xy location
 
 LONG TERM:
 
 - Add an easy way for the user to automatically classify and visualize individual shapefile features based on their underlying data values. 
+-- first make itershapefile return feature but without actually reading anything, thus possible to use GetAttr or GetShape by using shapefile.shape() or .records() with each feature's index nr
+-- then make itershapefile something the user can use without globvar progressbar problem, which means user can test attr of each feature and assign symbol options accordingly
+-- above ok for manual simple stuff, but for classifying compared to entire sample, need a low-level classifier object that can be fed each row's attr connected to index nr (ala RTree). Ideally when has been finished fed, its getclassval method can be specified a classifytype (eq interval, nat jenks,etc) and calculates and returns its relative classvalue. 
+-- then, the returned classvalue must be used to decide from a range of real symbol option choices one by one, by a higherlevel symbolcreator that is told by user what range of option choices to map onto values.
+-- lastly, each feature's value-informed options dictionary must be somehow passed to a new RenderFeature function of the _Renderer class to render each individual feature based on options
 - Add ability to zoom in to a certain extent instead of showing the entire world. 
+- Add multiprocessing support (e.g. dividing up list of features to be rendered and then merging all partially rendered maps)
 - Add support for projected shapefiles and to change coordinate system/projection of your map. 
