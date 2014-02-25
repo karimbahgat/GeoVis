@@ -1,5 +1,7 @@
 # Python Geographic Visualizer (GeoVis)
 
+![Map image of global provinces rendered with GeoVis (Data source: GADM v2)](https://raw.github.com/karimbahgat/geovis/master/images/readme_topbanner.png)
+
 **Version: 0.1.0**
 
 **Author: [Karim Bahgat](https://uit.academia.edu/KarimBahgat)**
@@ -98,7 +100,7 @@ for eachfolder, eachshapefile, eachfiletype in geovis.ShapefileFolder(r"D:\Test 
 The filename, parent-folder, and file extension can be played around with to do many other batch operations as well, such as placing each map image next to (in the same folder as) each shapefile. 
 
 ### Adding Flavor to Your Map
-The above quick methods used a set of default symbol options for the shapefiles that they rendered. There are however several ways to add more flavor to your map. The most basic stylizing tool you will want to know about is the Color creator (a wrapper around [Valentin Lab’s Colour module](https://pypi.python.org/pypi/colour) with added convenience functionality). You can either create a random color by not specifying any arguments:
+The above quick methods used a set of default symbol options for the shapefiles that they rendered. There are however several ways to add more flavor to your map. The most basic stylizing tool you will want to know about is the Color creator (a wrapper around [Valentin Labï¿½s Colour module](https://pypi.python.org/pypi/colour) with added convenience functionality). You can either create a random color by not specifying any arguments:
 
 ```python
 randomcolor = geovis.Color()
@@ -165,8 +167,8 @@ I welcome any efforts at contributing to this project. Below are a list of curre
 GeoVis could not have been accomplished without the excellent work of other open-source modules which it uses behind-the-scenes: 
 
 - For shapefile reading it uses a modified version of 
-[Joel Lawhead’s PyShp module](http://code.google.com/p/pyshp/). 
-- For color-wizardry it builds on and expands [Valentin Lab’s Colour module](https://pypi.python.org/pypi/colour). 
+[Joel Lawhead's PyShp module](http://code.google.com/p/pyshp/). 
+- For color-wizardry it builds on and expands [Valentin Lab's Colour module](https://pypi.python.org/pypi/colour). 
 - And offcourse it relies on the rendering of whichever renderer you are using. 
 
 ---
