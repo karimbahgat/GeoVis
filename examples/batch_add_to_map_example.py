@@ -1,11 +1,6 @@
 """
 Example Script for the Python Geographic Visualizer (GeoVis)
 https://github.com/karimbahgat/geovis
-
-Creates map from scratch, using a baselayer and adding
-an entire folder of shapefiles.
-
-Alter the testinputs to folders/shapefiles of your choice.
 """
 
 ############
@@ -36,6 +31,9 @@ newmap.AddToMap(BASE_SHAPEFILE)
 #overlay with a folder of many shapefiles
 for eachfolder, eachfile, eachext in geovis.ShapefileFolder(MANY_SHAPEFILES_FOLDER):
     newmap.AddToMap(eachfolder+eachfile+eachext, style=MAPCOLORSTYLE)
+
+#add title
+newmap.AddText(0.5, 0.1, text="Batch Map Example", textsize=40)
 
 #finally view the map
 newmap.ViewMap()

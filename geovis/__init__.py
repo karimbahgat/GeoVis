@@ -22,7 +22,7 @@ __version__ = "0.1.0"
 
 # IMPORTS
 #builtins
-import sys, os, itertools, array, threading, random, math
+import sys, os, itertools, array, threading, random, math, platform
 import Tkinter as tk
 #customized
 import messages
@@ -31,6 +31,7 @@ import shapefile_fork as pyshp
 import colour
 
 # GLOBAL VARS
+OSSYSTEM = platform.system().lower()
 #PyShp shapetype constants
 NULL = 0
 POINT = 1
@@ -226,7 +227,12 @@ class _IterShapefile:
 
 class _TkCanvas_Renderer:
     def __init__(self):
-        pass
+        global tkFont
+        import tkFont
+        self.fontnames = dict([("default", "Times"),
+                       ("times new roman", "Times"),
+                       ("courier", "Courier"),
+                       ("helvetica","Helvetica") ])
     def NewImage(self):
         """this must be called before doing any rendering.\
         Note: this replaces any previous image drawn on so be sure to
@@ -246,7 +252,7 @@ class _TkCanvas_Renderer:
         #place the shadow
         if background:
             x0,y0,x1,y1 = ( -int(width/50.0), int(height/50.0), width-int(width/50.0), height+int(height/50.0) )
-            self.drawer.create_rectangle(x0,y0,x1,y1, fill="Gray15", outline="")
+            self.drawer.create_rectangle(x0,y0,x1,y1, fill="Gray18", outline="")
         #place background
         x0,y0,x1,y1 = ( 0, 0, width, height )
         self.drawer.create_rectangle(x0,y0,x1,y1, fill=background, outline="")
@@ -280,7 +286,10 @@ class _TkCanvas_Renderer:
         self.window.bind("<Motion>", dragto, "+")
         self.window.bind("<Button-1>", activatedrag, "+")
         self.window.bind("<ButtonRelease-1>", deactivatedrag, "+")
-    def Render(self, shapeobj, options):
+    def RenderText(self, relx, rely, text, options):
+        if not options.get("texteffect"):
+            self._BasicText(relx, rely, text, options)
+    def RenderShape(self, shapeobj, options):
         "looks at instructions in options to decide which draw method to use"
         coords = shapeobj.to_tkinter()
         if shapeobj.type == "polygon":
@@ -293,6 +302,12 @@ class _TkCanvas_Renderer:
         self.window.mainloop()
 
     #Internal use only
+    def _BasicText(self, relx, rely, text, options):
+        "draws basic text, no effects"
+        font = tkFont.Font(family=self.fontnames[options["textfont"]], size=options["textsize"])
+        x = int(MAPWIDTH*relx)
+        y = int(MAPHEIGHT*rely)
+        self.drawer.create_text((x,y), text=text, font=font, fill=options["textcolor"], anchor="center")
     def _BasicLine(self, coords, options):
         "draw basic lines with outline, but nothing at start and end"
         if len(coords) < 4:
@@ -319,7 +334,11 @@ class _PIL_Renderer:
     #ALSO NEEDS THE Aggdraw.Draw(img) OBJECT
     def __init__(self):
         global PIL
-        import PIL, PIL.Image, PIL.ImageDraw, PIL.ImageTk
+        import PIL, PIL.Image, PIL.ImageDraw, PIL.ImageTk, PIL.ImageFont
+        self.sysfontfolders = dict([("windows","C:/Windows/Fonts/")])
+        self.fontfilenames = dict([("default", "TIMES.TTF"),
+                                   ("times new roman","TIMES.TTF"),
+                                   ("arial","ARIAL.TTF")])
     def NewImage(self):
         """this must be called before doing any rendering.\
         Note: this replaces any previous image drawn on so be sure to
@@ -333,7 +352,10 @@ class _PIL_Renderer:
         dimensions = (width, height)
         self.img = PIL.Image.new(mode, dimensions, background)
         self.drawer = PIL.ImageDraw.Draw(self.img)
-    def Render(self, shapeobj, options):
+    def RenderText(self, relx, rely, text, options):
+        if not options.get("texteffect"):
+            self._BasicText(relx, rely, text, options)
+    def RenderShape(self, shapeobj, options):
         "looks at instructions in options to decide which draw method to use"
         #possibly use an options filterer here to enure all needed options
         #are given, otherwise snap to default
@@ -353,6 +375,14 @@ class _PIL_Renderer:
         self.img.save(savepath)
 
     #Internal use only
+    def _BasicText(self, relx, rely, text, options):
+        "draws basic text, no effects"
+        fontlocation = self.sysfontfolders[OSSYSTEM]+self.fontfilenames[options["textfont"]]
+        font = PIL.ImageFont.truetype(fontlocation, size=options["textsize"])
+        fontwidth, fontheight = self.drawer.textsize(text, font)
+        x = int(MAPWIDTH*relx) - int(fontwidth/2.0)
+        y = int(MAPHEIGHT*rely) - int(fontheight/2.0)
+        self.drawer.text((x,y), text=text, font=font, fill=options["textcolor"])
     def _BasicLine(self, coords, options):
         "draw basic lines with outline, but nothing at start and end"
         #first draw outline line
@@ -380,6 +410,10 @@ class _Aggdraw_Renderer:
     def __init__(self):
         global aggdraw, PIL
         import aggdraw, PIL, PIL.Image, PIL.ImageDraw, PIL.ImageTk
+        self.sysfontfolders = dict([("windows","C:/Windows/Fonts/")])
+        self.fontfilenames = dict([("default", "TIMES.TTF"),
+                                   ("times new roman","TIMES.TTF"),
+                                   ("arial","ARIAL.TTF")])
     def NewImage(self):
         """this must be called before doing any rendering.\
         Note: this replaces any previous image drawn on so be sure to
@@ -393,7 +427,7 @@ class _Aggdraw_Renderer:
         dimensions = (width, height)
         self.img = PIL.Image.new(mode, dimensions, background)
         self.drawer = aggdraw.Draw(self.img)
-    def Render(self, shapeobj, options):
+    def RenderShape(self, shapeobj, options):
         "looks at instructions in options to decide which draw method to use"
         coords = shapeobj.to_aggdraw()
         if shapeobj.type == "polygon":
@@ -402,6 +436,9 @@ class _Aggdraw_Renderer:
             self._BasicLine(coords, options)
         elif shapeobj.type == "point":
             self._BasicCircle(coords, options)
+    def RenderText(self, relx, rely, text, options):
+        if not options.get("texteffect"):
+            self._BasicText(relx, rely, text, options)
     def GetImage(self):
         self.drawer.flush()
         return PIL.ImageTk.PhotoImage(self.img)
@@ -410,6 +447,14 @@ class _Aggdraw_Renderer:
         self.img.save(savepath)
 
     #Internal use only
+    def _BasicText(self, relx, rely, text, options):
+        "draws basic text, no effects"
+        fontlocation = self.sysfontfolders[OSSYSTEM]+self.fontfilenames[options["textfont"]]
+        font = aggdraw.Font(color=options["textcolor"], file=fontlocation, size=options["textsize"], opacity=options["textopacity"])
+        fontwidth, fontheight = self.drawer.textsize(text, font)
+        x = int(MAPWIDTH*relx) - int(fontwidth/2.0)
+        y = int(MAPHEIGHT*rely) - int(fontheight/2.0)
+        self.drawer.text((x,y), text, font)
     def _BasicLine(self, coords, options):
         "draw basic lines with outline, but nothing at start and end"
         #first draw outline line
@@ -444,6 +489,12 @@ class _PyCairo_Renderer:
     def __init__(self):
         global cairo
         import cairo
+        self.fontnames = dict([("default", "cursive"),
+                               ("serif", "serif"),
+                               ("sans-serif", "sans-serif"),
+                               ("cursive","cursive"),
+                               ("fantasy", "fantasy"),
+                               ("monospace","monospace") ])
     def NewImage(self):
         """this must be called before doing any rendering.\
         Note: this replaces any previous image drawn on so be sure to
@@ -461,7 +512,10 @@ class _PyCairo_Renderer:
             self.drawer.set_source_rgb(*backgroundcolor)
             self.drawer.rectangle(0,0,MAPWIDTH,MAPHEIGHT)
             self.drawer.fill()
-    def Render(self, shapeobj, options):
+    def RenderText(self, relx, rely, text, options):
+        if not options.get("texteffect"):
+            self._BasicText(relx, rely, text, options)
+    def RenderShape(self, shapeobj, options):
         "looks at instructions in options to decide which draw method to use"
         #possibly use an options filterer here to enure all needed options
         #are given, otherwise snap to default
@@ -485,6 +539,18 @@ class _PyCairo_Renderer:
     #Internal use only
     def __hex_to_rgb(self, hexcolor):
         return colour.Color(hexcolor).rgb
+    def _BasicText(self, relx, rely, text, options):
+        "draws basic text, no effects"
+        self.drawer.select_font_face(self.fontnames[options["textfont"]])
+        self.drawer.set_font_size(options["textsize"]) # em-square height is 90 pixels
+        _, _, fontwidth, fontheight, _, _ = self.drawer.text_extents(text)
+        x = int(MAPWIDTH*relx) - int(fontwidth/2.0)
+        y = int(MAPHEIGHT*rely) + int(fontheight/2.0) #NOTICE: for some odd reason height has to be plussed, not minused
+        self.drawer.move_to(x, y) # move to point (x, y) = (10, 90)
+        textcolor = self.__hex_to_rgb(options["textcolor"])
+        self.drawer.set_source_rgb(*textcolor) # yellow
+        self.drawer.show_text(text)
+        self.drawer.stroke()
     def _BasicLine(self, coords, options):
         "draw basic lines with outline, but nothing at start and end"
         if len(coords) >= 2:
@@ -562,11 +628,27 @@ class _Renderer:
         self.renderer.NewImage()
     def ViewShapefile(self, shapefilepath, customoptions):
         self._RenderShapefile(shapefilepath, customoptions)
+        self._RenderMapTitle(shapefilepath, customoptions)
         self._ViewRenderedShapefile()
     def SaveShapefileImage(self, shapefilepath, savepath, customoptions):
         self._RenderShapefile(shapefilepath, customoptions)
+        self._RenderMapTitle(shapefilepath, customoptions)
         self._SaveRenderedShapefile(savepath)
     #internal use only
+    def _RenderMapTitle(self, shapefilepath, customoptions):
+        #unless not specified, default maptitle is set to name of shapefile
+        if customoptions.get("maptitle", "not set") == "not set":
+            shapefilename = shapefilepath.split("\\")[-1]
+            shapefilename = ".".join(shapefilename.split(".")[:-1])
+            customoptions["maptitle"] = shapefilename
+        #unless asked not to show maptitle, generate default textoptions except large text size
+        if customoptions.get("maptitle"):
+            textoptions = _CheckTextOptions(dict([("textsize",50)]))
+            self._RenderText(0.5, 0.05, customoptions["maptitle"], textoptions)
+    def _RenderText(self, relx, rely, text, textoptions):
+        self.renderer.RenderText(relx, rely, text, textoptions)
+    def _RenderShape(self, shape, customoptions):
+        self.renderer.RenderShape(shape, customoptions)
     def _RenderShapefile(self, shapefilepath, customoptions):
         #create shapefile generator
         shapefile = _IterShapefile(shapefilepath)
@@ -580,7 +662,7 @@ class _Renderer:
         #then iterate through shapes and render each
         for eachshape in SHAPEFILELOOP:
             #then send to be rendered
-            self.renderer.Render(eachshape, customoptions)
+            self._RenderShape(eachshape, customoptions)
     def _ViewRenderedShapefile(self):
         #finally open image in tkinter
         if RENDERER == "tkinter":
@@ -761,6 +843,18 @@ def _CheckOptions(customoptions):
     if not customoptions.get("outlinewidth"):
         customoptions["outlinewidth"] = 1
     return customoptions
+def _CheckTextOptions(customoptions):
+    if not customoptions.get("textfont"):
+        customoptions["textfont"] = "default"
+    if not customoptions.get("textsize"):
+        customoptions["textsize"] = 7
+    if not customoptions.get("textcolor"):
+        customoptions["textcolor"] = Color("black")
+    if not customoptions.get("textopacity"):
+        customoptions["textopacity"] = 255
+    if not customoptions.get("texteffect"):
+        customoptions["texteffect"] = None
+    return customoptions
 
 #QUICK TASKS
 def ViewShapefile(shapefilepath, **customoptions):
@@ -784,6 +878,9 @@ class NewMap:
     """Creates and returns a new map based on previously defined mapsettings."""
     def __init__(self):
         self.renderer = _Renderer()
+    def AddText(self, relx, rely, text, **textoptions):
+        textoptions = _CheckTextOptions(textoptions)
+        self.renderer._RenderText(relx, rely, text, textoptions)
     def AddToMap(self, shapefilepath, **customoptions):
         """Add a shapefile to the map.
         -shapefilepath is the path string of the shapefile to add.
@@ -798,7 +895,11 @@ class NewMap:
         -savepath is the string path for where you wish to save the map image. Image type extension must be specified ('.png','.gif',...)"""
         self.renderer._SaveRenderedShapefile(savepath)
 
-#MAP SPECS  
+#MAP SPECS
+##def SetMapTitle(maptitle):
+##    "not yet used..."
+##    global MAPTITLE
+##    MAPTITLE = maptitle
 def SetMapDimensions(width, height):
     """Sets the width and height of the next map. At startup the width and height are set to the dimensions of the window screen.
     -width/height must be integers."""

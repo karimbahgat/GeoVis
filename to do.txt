@@ -1,10 +1,10 @@
 NEXT UP:
 
-- Cleanup README again espec at top, add multilevel contents links, usage instead of basic usage, and maybe documentation at bottom instead of in wiki, write own script to generate docs, and add contributing guidelines at very bottom.
+- Find way to determine whether / or \ is correct path splitter
+- Add simple way to render text, default font, and place it to relative xy location
 - Add support for viewing shapefiles with the PyCairo renderer.
-- Add some example scripts?
+- Add some more example scripts?
 - Add simple support for Python 3
-- Add simple way to render map title, default font, and place it to relative xy location
 
 LONG TERM:
 
