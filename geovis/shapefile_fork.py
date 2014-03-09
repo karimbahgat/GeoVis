@@ -576,7 +576,7 @@ class Reader:
         if not self.numRecords:
             self.__dbfHeader()
         i = self.__restrictIndex(i)
-        recSize = self.__recordFmt()[1]
+        recSize = self.recorddtypes[1]
         f.seek(0)
         f.seek(self.__dbfHeaderLength() + (i * recSize))
         return self.__record()

@@ -10,7 +10,7 @@ or other third-party rendering modules to do its main work.
 The current version is functional, but should be considered
 a work in progress with potential bugs, so use with care.
 
-Dependencies: None, but Aggdraw, PIL, or PyCairo is recommended.
+Dependencies: None, but it is recommended to have Aggdraw, PIL, or PyCairo.
 System Compatibility: Python version 2.x and Windows. 
 License: Creative Commons Attribution-ShareAlike (CC BY-SA). For more details see: http://creativecommons.org/licenses/by-sa/4.0/
 
@@ -18,14 +18,14 @@ Author: Karim Bahgat (karim.bahgat.norway<at>gmail.com)
 Homepage: https://github.com/karimbahgat/geovis
 Date: February 21, 2014
 """
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # IMPORTS
 #builtins
-import sys, os, itertools, array, threading, random, math, platform
+import sys, os, itertools, array, threading, random, math, platform, operator
 import Tkinter as tk
 #customized
-import messages
+import messages, listy
 #third party modules
 import shapefile_fork as pyshp
 import colour
@@ -119,29 +119,51 @@ COLORSTYLES = dict([("strong", dict( [("intensity",1), ("brightness",0.5)]) ),
 
 # INTERNAL CLASSES
 class _PyShpShape:
-    def __init__(self, coords, shapetype):
+    def __init__(self, shapefile, fieldnames, uniqid, coords, shapetype):
+        "every shapetype is always multi (upon entry) so have to be looped through when retrieved."
+        self._shapefile = shapefile
+        self.fieldnames = fieldnames
+        self.id = uniqid
         self.coords = coords
         self.type = shapetype
     def to_tkinter(self):
-        convertedcoords = self._MapCoords(self.coords)
+        convertedcoords = (self._MapCoords(eachmulti) for eachmulti in self.coords)
         formattedcoords = convertedcoords
-        return formattedcoords
+        return (eachmulti for eachmulti in formattedcoords)
     def to_PIL(self):
-        convertedcoords = self._MapCoords(self.coords)
+        convertedcoords = (self._MapCoords(eachmulti) for eachmulti in self.coords)
         formattedcoords = convertedcoords
-        return array.array("f",formattedcoords)
+        return (array.array("f",eachmulti) for eachmulti in formattedcoords)
     def to_aggdraw(self):
-        convertedcoords = self._MapCoords(self.coords)
+        convertedcoords = (self._MapCoords(eachmulti) for eachmulti in self.coords)
         formattedcoords = convertedcoords
-        return array.array("f",formattedcoords)
+        return (array.array("f",eachmulti) for eachmulti in formattedcoords)
     def to_pycairo(self):
-        convertedcoords = self._MapCoords(self.coords)
-        formattedcoords = self.__pairwise(convertedcoords)
-        return formattedcoords
+        convertedcoords = (self._MapCoords(eachmulti) for eachmulti in self.coords)
+        formattedcoords = (self.__pairwise(eachmulti) for eachmulti in convertedcoords)
+        return (eachmulti for eachmulti in formattedcoords)
+    def GetAttributes(self, fieldname=None):
+        if fieldname:
+            rowdict = dict(zip(self.fieldnames, self._shapefile.record(self.id)))
+            fieldvalue = rowdict[fieldname]
+            return fieldvalue
+        else:
+            entirerow = self._shapefile.record(self.id)
+            return entirerow
+    def GetCenter(self):
+        "so far only simple nonnumpy"
+        for single in self.coords:
+            xs = [xy[0] for xy in single]
+            xmid = sum(xs)/float(len(xs))
+            ys = [xy[1] for xy in single]
+            ymid = sum(ys)/float(len(ys))
+            return (xmid,ymid)
     #internal use only
     def __pairwise(self, coords, batchsize=2):
+        "only used when sending coordinates to pycairo, bc can only draw as a path one xy point at a time"
         return [pair for pair in itertools.izip(*[iter(coords)] * batchsize)]
     def _MapCoords(self, incoords):
+        "takes single set of coords, not multicoords"
         if NUMPYSPEED:
             converted = (incoords + TRANSLATION) * SCALING
             #for smoother drawings comment out the rint and vstack commands below
@@ -168,62 +190,90 @@ class _PyShpShape:
             return outcoords
         
 
-class _IterShapefile:
+class Shapefile:
     #builtins
-    def __init__(self, shapefilepath):
+    def __init__(self, shapefilepath, showprogress="not specified", progresstext="looping shapefile"):
         self.shapefile = pyshp.Reader(shapefilepath)
+        self.showprogress = showprogress
+        self.progresstext = progresstext
         name = ".".join(shapefilepath.split(".")[:-1])
         name = name.split("\\")[-1]
         self.filename = name
+        self.fieldnames = [fieldinfo[0] for fieldinfo in self.shapefile.fields[1:]]
     def __len__(self):
         return self.shapefile.numRecords
     def __iter__(self):
-        if NUMPYSPEED:
-            for shape in self.shapefile.iterShapes(numpyspeed=NUMPYSPEED):
-                SHAPEFILELOOP.Increment()
-                shapetype = PYSHPTYPE_AS_TEXT[shape.shapeType].lower()
-                if "polygon" in shapetype:
-                    if not numpy.any(shape.parts):
-                        yield _PyShpShape(shape.points, shapetype)
-                    else:
-                        for each in numpy.split(shape.points, shape.parts[1:]):
-                            yield _PyShpShape(each, "polygon")
-                elif "line" in shapetype:
-                    if not numpy.any(shape.parts):
-                        yield _PyShpShape(shape.points, shapetype)
-                    else:
-                        for each in numpy.split(shape.points, shape.parts[1:]):
-                            yield _PyShpShape(each, "line")
-                elif "point" in shapetype:
-                    if "multi" in shapetype:
-                        for each in shape.points:
-                            yield _PyShpShape(each, "point")
-                    else:
-                        yield _PyShpShape(shape.points, "point")
+        #prepare progressreporting
+        if self.showprogress == "not specified":
+            if SHOWPROGRESS:
+                shellreport = "progressbar"
+            else:
+                shellreport = None
         else:
-            for shape in self.shapefile.iterShapes(numpyspeed=NUMPYSPEED):
+            shellreport = self.showprogress
+        SHAPEFILELOOP = messages.ProgressReport(self.shapefile.iterShapes(numpyspeed=NUMPYSPEED), text=self.progresstext+" "+self.filename, shellreport=shellreport, countmethod="manual", genlength=self.shapefile.numRecords)
+        if NUMPYSPEED:
+            #loop
+            for shapeindex, shape in enumerate(SHAPEFILELOOP):
                 SHAPEFILELOOP.Increment()
-                #first set new shapetype to pass on
-                shapetype = PYSHPTYPE_AS_TEXT[shape.shapeType].lower()
-                if "polygon" in shapetype:
-                    newshapetype = "polygon"
-                if "line" in shapetype:
-                    newshapetype = "line"
-                if "point" in shapetype:
-                    newshapetype = "point"
-                #then serve up points universal for all shapetypes
-                if "point" in shapetype:
-                    yield _PyShpShape(shape.points, newshapetype)
-                elif len(shape.parts) == 1:
-                    yield _PyShpShape(shape.points, newshapetype)
+                yield self._PrepShape(shapeindex, shape)
+        else:
+            for shapeindex, shape in enumerate(SHAPEFILELOOP):
+                SHAPEFILELOOP.Increment()
+                yield self._PrepShape(shapeindex, shape)
+    def GetShape(self, shapeindex):
+        shape = self.shapefile.shape(shapeindex, numpyspeed=NUMPYSPEED)
+        return self._PrepShape(shapeindex, shape)
+    def _PrepShape(self, shapeindex, shape):
+        if NUMPYSPEED:
+            shapetype = PYSHPTYPE_AS_TEXT[shape.shapeType].lower()
+            if "polygon" in shapetype:
+                if not numpy.any(shape.parts):
+                    nestedcoords = [shape.points]
+                    return _PyShpShape(self.shapefile, self.fieldnames, shapeindex, nestedcoords, shapetype)
                 else:
-                    shapeparts = list(shape.parts)
-                    shapeparts.append(len(shape.points))
-                    startindex = shapeparts[0]
-                    for endindex in shapeparts[1:]:
-                        eachmulti = shape.points[startindex:endindex]
-                        startindex = endindex
-                        yield _PyShpShape(eachmulti, newshapetype)
+                    coords = numpy.split(shape.points, shape.parts[1:])
+                    return _PyShpShape(self.shapefile, self.fieldnames, shapeindex, coords, "polygon")
+            elif "line" in shapetype:
+                if not numpy.any(shape.parts):
+                    nestedcoords = [shape.points]
+                    return _PyShpShape(self.shapefile, self.fieldnames, shapeindex, nestedcoords, shapetype)
+                else:
+                    coords = numpy.split(shape.points, shape.parts[1:])
+                    return _PyShpShape(self.shapefile, self.fieldnames, shapeindex, coords, "line")
+            elif "point" in shapetype:
+                if "multi" in shapetype:
+                    return _PyShpShape(self.shapefile, self.fieldnames, shapeindex, shape.points, "point")
+                else:
+                    nestedcoords = [shape.points]
+                    return _PyShpShape(self.shapefile, self.fieldnames, shapeindex, nestedcoords, "point")
+        else:
+            #first set new shapetype to pass on
+            shapetype = PYSHPTYPE_AS_TEXT[shape.shapeType].lower()
+            if "polygon" in shapetype:
+                newshapetype = "polygon"
+            if "line" in shapetype:
+                newshapetype = "line"
+            if "point" in shapetype:
+                newshapetype = "point"
+            #then serve up points universal for all shapetypes
+            if "point" in shapetype:
+                nestedcoords = [shape.points]
+                return _PyShpShape(self.shapefile, self.fieldnames, shapeindex, nestedcoords, newshapetype)
+            elif len(shape.parts) == 1:
+                nestedcoords = [shape.points]
+                return _PyShpShape(self.shapefile, self.fieldnames, shapeindex, nestedcoords, newshapetype)
+            else:
+                nestedcoords = []
+                shapeparts = list(shape.parts)
+                shapeparts.append(len(shape.points))
+                startindex = shapeparts[0]
+                for endindex in shapeparts[1:]:
+                    eachmulti = shape.points[startindex:endindex]
+                    nestedcoords.append(eachmulti)
+                    startindex = endindex
+                return _PyShpShape(self.shapefile, self.fieldnames, shapeindex, nestedcoords, newshapetype)
+
 
 class _TkCanvas_Renderer:
     def __init__(self):
@@ -291,13 +341,14 @@ class _TkCanvas_Renderer:
             self._BasicText(relx, rely, text, options)
     def RenderShape(self, shapeobj, options):
         "looks at instructions in options to decide which draw method to use"
-        coords = shapeobj.to_tkinter()
-        if shapeobj.type == "polygon":
-            self._BasicPolygon(coords, options)
-        elif shapeobj.type == "line":
-            self._BasicLine(coords, options)
-        elif shapeobj.type == "point":
-            self._BasicCircle(coords, options)
+        multishapes = shapeobj.to_tkinter()
+        for coords in multishapes:
+            if shapeobj.type == "polygon":
+                self._BasicPolygon(coords, options)
+            elif shapeobj.type == "line":
+                self._BasicLine(coords, options)
+            elif shapeobj.type == "point":
+                self._BasicCircle(coords, options)
     def RunTk(self):
         self.window.mainloop()
 
@@ -360,18 +411,17 @@ class _PIL_Renderer:
         #possibly use an options filterer here to enure all needed options
         #are given, otherwise snap to default
         #............
-        coords = shapeobj.to_PIL()
-        if shapeobj.type == "polygon":
-            self._BasicPolygon(coords, options)
-        elif shapeobj.type == "line":
-            self._BasicLine(coords, options)
-        elif shapeobj.type == "point":
-            self._BasicCircle(coords, options)
+        multishapes = shapeobj.to_PIL()
+        for coords in multishapes:
+            if shapeobj.type == "polygon":
+                self._BasicPolygon(coords, options)
+            elif shapeobj.type == "line":
+                self._BasicLine(coords, options)
+            elif shapeobj.type == "point":
+                self._BasicCircle(coords, options)
     def GetImage(self):
-        del self.drawer
         return PIL.ImageTk.PhotoImage(self.img)
     def SaveImage(self, savepath):
-        del self.drawer
         self.img.save(savepath)
 
     #Internal use only
@@ -429,13 +479,14 @@ class _Aggdraw_Renderer:
         self.drawer = aggdraw.Draw(self.img)
     def RenderShape(self, shapeobj, options):
         "looks at instructions in options to decide which draw method to use"
-        coords = shapeobj.to_aggdraw()
-        if shapeobj.type == "polygon":
-            self._BasicPolygon(coords, options)
-        elif shapeobj.type == "line":
-            self._BasicLine(coords, options)
-        elif shapeobj.type == "point":
-            self._BasicCircle(coords, options)
+        multishapes = shapeobj.to_aggdraw()
+        for coords in multishapes:
+            if shapeobj.type == "polygon":
+                self._BasicPolygon(coords, options)
+            elif shapeobj.type == "line":
+                self._BasicLine(coords, options)
+            elif shapeobj.type == "point":
+                self._BasicCircle(coords, options)
     def RenderText(self, relx, rely, text, options):
         if not options.get("texteffect"):
             self._BasicText(relx, rely, text, options)
@@ -520,13 +571,14 @@ class _PyCairo_Renderer:
         #possibly use an options filterer here to enure all needed options
         #are given, otherwise snap to default
         #............
-        coords = shapeobj.to_pycairo()
-        if shapeobj.type == "polygon":
-            self._BasicPolygon(coords, options)
-        elif shapeobj.type == "line":
-            self._BasicLine(coords, options)
-        elif shapeobj.type == "point":
-            self._BasicCircle(coords, options)
+        multishapes = shapeobj.to_pycairo()
+        for coords in multishapes:
+            if shapeobj.type == "polygon":
+                self._BasicPolygon(coords, options)
+            elif shapeobj.type == "line":
+                self._BasicLine(coords, options)
+            elif shapeobj.type == "point":
+                self._BasicCircle(coords, options)
     def GetImage(self):
         self.img.write_to_gif("tempgif.gif")
         gifimg = tk.PhotoImage("tempgif.gif")
@@ -651,16 +703,9 @@ class _Renderer:
         self.renderer.RenderShape(shape, customoptions)
     def _RenderShapefile(self, shapefilepath, customoptions):
         #create shapefile generator
-        shapefile = _IterShapefile(shapefilepath)
-        #prepare progressreporting
-        if SHOWPROGRESS:
-            shellreport = "progressbar"
-        else:
-            shellreport = None
-        global SHAPEFILELOOP
-        SHAPEFILELOOP = messages.ProgressReport(shapefile, text="rendering "+shapefile.filename, shellreport=shellreport, countmethod="manual")
+        shapefile = Shapefile(shapefilepath, progresstext="rendering")
         #then iterate through shapes and render each
-        for eachshape in SHAPEFILELOOP:
+        for eachshape in shapefile:
             #then send to be rendered
             self._RenderShape(eachshape, customoptions)
     def _ViewRenderedShapefile(self):
@@ -757,7 +802,7 @@ def _FolderLoop(folder, filetype=""):
                 eachfiletype = "." + eachfile.split(".")[-1]
                 yield (eachdir, eachfilename, eachfiletype)
 def ShapefileFolder(folder):
-    """Returns a generator that will loop through a folder and all its subfolder and return information of every shapefile it finds. Information returned is a tuple with the following elements (string name of current subfolder, string name of shapefile found, string of the shapefile's file extension(will always be '.shp'))\
+    """A generator that will loop through a folder and all its subfolder and return information of every shapefile it finds. Information returned is a tuple with the following elements (string name of current subfolder, string name of shapefile found, string of the shapefile's file extension(will always be '.shp'))\
     -folder is a path string of the folder to check for shapefiles."""
     for eachfolder, eachshapefile, eachfiletype in _FolderLoop(folder, filetype=".shp"):
         yield (eachfolder, eachshapefile, eachfiletype)
@@ -780,18 +825,9 @@ def SetRenderingOptions(renderer="not set", numpyspeed="not set", reducevectors=
         REDUCEVECTORS = reducevectors
         
 #STYLE CUSTOMIZING
-DEFAULTCOLOR = dict([("basecolor","random"),
-                       ("intensity","random"),
-                       ("brightness","random"),
-                       ("style",None)
-                       ])
-def _SetMapColors(**optionstochange):
-    """Sets the default symbol options that will be used to visualize shapefiles. These default options will only be used for those options of a shapefile that the user has not already specified.
-    -customoptions are named arguments specifying the map's default symbol options. Valid arguments are: fillcolor, fillsize (determines circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth."""
-    for eachoption, newvalue in optionstochange.iteritems():
-        DEFAULTOPTIONS[eachoption] = newvalue
-def Color(basecolor="random", intensity="random", brightness="random", style=None):
+def Color(basecolor="random", intensity="not specified", brightness="not specified", style=None):
     """Returns a hex color string of the color options specified.
+    NOTE: changes with randomizing colors...
     -basecolor is the human-like name of a color.
     -intensity of how strong the color should be. Must be a float between 0 and 1 (default is random).
     -brightness of how light or dark the color should be. Must be a float between 0 and 1 (default is random).
@@ -802,37 +838,284 @@ def Color(basecolor="random", intensity="random", brightness="random", style=Non
         intensity = COLORSTYLES[style]["intensity"]
         brightness = COLORSTYLES[style]["brightness"]
     else:
-        #maybe get random
-        if intensity == "random":
-            intensity = random.randrange(20,80)/100.0
-        if brightness == "random" and basecolor not in ("black","white","gray"):
-            brightness = random.randrange(20,80)/100.0
+        #special black,white,gray mode, bc random intens/bright starts creating colors, so have to be ignored
+        if basecolor in ("black","white","gray"):
+            if brightness == "random":
+                brightness = random.randrange(20,80)/100.0
+        #or normal
+        else:
+            if intensity == "random":
+                intensity = random.randrange(20,80)/100.0
+            elif intensity == "not specified":
+                intensity = 0.7
+            if brightness == "random":
+                brightness = random.randrange(20,80)/100.0
+            elif brightness == "not specified":
+                brightness = 0.5
+    #then assign colors
     if basecolor in ("black","white","gray"):
-        #special black,white,gray mode, bc random intens/bright starts creating colors,
-        #and so have to be ignored
-        if brightness == "random":
+        #graymode
+        if brightness == "not specified":
             return colour.Color(color=basecolor).hex
         else:
-            #only listen to brightness if was specified by user (nonrandom)
+            #only listen to gray brightness if was specified by user or randomized
             return colour.Color(color=basecolor, luminance=brightness).hex
     elif basecolor == "random":
+        #random colormode
         basecolor = random.randrange(100)
         return colour.Color(pick_for=basecolor, saturation=intensity, luminance=brightness).hex
     else:
+        #custom made color
         return colour.Color(color=basecolor, saturation=intensity, luminance=brightness).hex
 
-def _ColorFeeder(**coloroptions):
-    """Returns an infinite generator of colors of a specified style. To generate a new color of the specified color options use the generator as an argument to the next() method or loop through it.\
-    -coloroptions is any series of named arguments to specify aspects of a color style. See the Color object documentation."""
-    while True:
-        value = Color(**coloroptions)
-        yield value
+class _ColorGradient:
+    """A generator that yields n colors between N end-points.
+    Each colorstop must be a hex color as made by the Color() function"""
+    def __init__(self, *colorstops):
+        #convert colorstops from hex to rgb to hsl
+        self.colorstops = [colour.rgb2hsl(colour.hex2rgb(eachcolor)) for eachcolor in colorstops]
+    def GetColors(self, nrcolors):
+        #then build final colorrange
+        hsl_colorrange = listy.Resize(self.colorstops, nrcolors, dtype="hsl")
+        #then iterate through results
+        for hsl in hsl_colorrange:
+            to_hex = colour.rgb2hex(colour.hsl2rgb(hsl))
+            yield to_hex
 
-def _SetMapSymbols(**optionstochange):
-    """Sets the default style options that will be used to visualize shapefiles. These default options will only be used for those options of a shapefile that the user has not already specified.\
-    -customoptions are named arguments specifying the map's default symbol options. Valid arguments are: fillcolor, fillsize (determines the circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth."""
-    for eachoption, newvalue in optionstochange.iteritems():
-        DEFAULTOPTIONS[eachoption] = newvalue
+class _SymbolClass:
+    def __init__(self, classmin, classmax, minvalue, maxvalue, classvalue, classsymbol):
+        "_min and _max are not attr values meant for user, but used for membership determination internally and can be different from attr"
+        self._min = classmin
+        self._max = classmax
+        self.min = minvalue
+        self.max = maxvalue
+        self.classvalue = classvalue
+        self.classsymbol = classsymbol
+
+class Classifier:
+    def __init__(self):
+        self.values = dict()
+        self.symbols = dict()
+        self.allclassifications = []
+    def AddClassification(self, symboltype, valuefield, symbolrange, classifytype="equal interval", nrclasses=5, excludevalues=[]):
+        classification = dict([("symboltype",symboltype),
+                               ("valuefield",valuefield),
+                               ("symbolrange",symbolrange),
+                               ("classifytype",classifytype),
+                               ("nrclasses",nrclasses),
+                               ("excludevalues",excludevalues) ])
+        self.allclassifications.append(classification)
+    def AddValue(self, index, symboltype, value):
+        if self.values.get(index):
+            #add to dict if already exits
+            self.values[index][symboltype] = value
+        else:
+            #or create new dict if not
+            self.values[index] = dict([(symboltype, value)])
+        self.symbols[index] = dict()
+    def CalculateClasses(self, symboltype, symbolrange, classifytype="equal interval", nrclasses=5, excludevalues=[]):
+        #first create pool of possible symbols from raw inputted symbolrange
+        if isinstance(symbolrange[0], (int,float)):
+            #create nr range
+            symbolrange = listy.Resize(symbolrange, nrclasses, dtype="numbers")
+        else:
+            #create colorrange
+            gradient = _ColorGradient(*symbolrange)
+            symbolrange = gradient.GetColors(nrcolors=nrclasses)
+        #calculate classes based on classifytype
+        self.classes = []
+        if classifytype.lower() == "equal interval":
+            self._EqualInterval(symboltype, symbolrange, classifytype, nrclasses, excludevalues)
+            self.__AssignMembershipByValue(symboltype)
+        elif classifytype.lower() == "equal classes":
+            self._EqualClasses(symboltype, symbolrange, classifytype, nrclasses, excludevalues)
+            self.__AssignMembershipByIndex(symboltype, excludevalues)
+        elif classifytype.lower() == "natural breaks":
+            self._NaturalBreaks(symboltype, symbolrange, classifytype, nrclasses, excludevalues)
+            self.__AssignMembershipByValue(symboltype)
+    def GetSymbol(self, uniqid, symboltype):
+        #for each class test value for membership
+        symbol = self.symbols[uniqid].get(symboltype)
+        if symbol:
+            return symbol
+    def GetValues(self):
+        return self.sortedvalues
+##    def ViewLegend(self, rootwindow=None):
+##        """
+##        ...workinprogress...
+##        Views the classes as a legend in a separate tkinter window.
+##        - rootwindow is a tkinter mainloop window, which, if given, will display the label simply as a sub/topwindow part of the mainloop."
+##        """
+##        #first create legend window
+##        if rootwindow:
+##            legendwin = tk.TopWindow(rootwindow)
+##        else:
+##            legendwin = tk.Tk()
+##        #then add class widgets
+##        for eachclass in self.classes:
+##            symbol = eachclass.classsymbol
+##            valuerange = str(eachclass.min)+" - "+str(eachclass.max)
+##            #so far only color bg supported, no size, shape, or outline
+##            if isinstance(symbol, basestring):
+##                lbl = tk.Label(bg=symbol, text=valuerange)
+##            else:
+##                raise TypeError()
+##            lbl.pack(fill="x")
+##        #then view
+##        if rootwindow:
+##            pass
+##        else:
+##            legendwin.mainloop()
+
+    # INTERNAL USE ONLY
+    def __AssignMembershipByValue(self, symboltype):
+        #loop through values and assign class symbol to each for the specified symboltype
+        for uniqid, value in self.sortedvalues:
+            value = value[symboltype]
+            #for each class test value for membership
+            for eachclass in self.classes:
+                ### print uniqid, value, eachclass.min, eachclass.max, eachclass.classsymbol
+                #membership true if within minmax range of that class
+                if value >= eachclass._min and value <= eachclass._max:
+                    #assign classsymbol
+                    self.symbols[uniqid][symboltype] = eachclass.classsymbol
+                    ### print uniqid, value, eachclass.classsymbol
+                    break
+    def __AssignMembershipByIndex(self, symboltype, excludevalues):
+        "still not working properly..."
+        #loop through values and assign class symbol to each for the specified symboltype
+        for index, (uniqid, value) in enumerate(self.sortedvalues):
+            value = value[symboltype]
+            #for each class test value for membership
+            for eachclass in self.classes:
+                ### print uniqid, value, eachclass.min, eachclass.max, eachclass.classsymbol
+                #membership true if within minmax range of that class
+                if index >= eachclass._min and index <= eachclass._max:
+                    #assign classsymbol
+                    self.symbols[uniqid][symboltype] = eachclass.classsymbol
+                    ### print uniqid, value, eachclass.classsymbol
+                    break
+    def _EqualInterval(self, symboltype, symbolrange, classifytype, nrclasses, excludevalues):
+        self.sortedvalues = sorted([(uniqid, value) for uniqid, value in self.values.iteritems() if value[symboltype] not in excludevalues], key=operator.itemgetter(1))
+        sortedvalues = [value[symboltype] for uniqid,value in self.sortedvalues]
+        lowerbound = sortedvalues[0]
+        upperbound = sortedvalues[-1]
+        intervalsize = int( (upperbound-lowerbound)/float(nrclasses) )        
+        #populate classes
+        classmin = lowerbound
+        print symboltype, classifytype
+        for index, classsymbol in enumerate(symbolrange):
+            if index == nrclasses-1:
+                classmax = upperbound
+            else:
+                classmax = classmin+intervalsize
+            print classmin, classmax, len(sortedvalues)
+            #determine min and max value
+            minvalue = classmin
+            maxvalue = classmax
+            #create and add class
+            self.classes.append( _SymbolClass(classmin, classmax, minvalue, maxvalue, index, classsymbol) )
+            #prep for next
+            classmin = classmax
+    def _EqualClasses(self, symboltype, symbolrange, classifytype, nrclasses, excludevalues):
+        self.sortedvalues = sorted([(uniqid, value) for uniqid, value in self.values.iteritems() if value[symboltype] not in excludevalues], key=operator.itemgetter(1))
+        sortedvalues = [value[symboltype] for uniqid,value in self.sortedvalues]
+        classsize = int( len(sortedvalues)/float(nrclasses) )
+        #populate classes
+        classmin = 0
+        print symboltype, classifytype
+        for index, classsymbol in enumerate(symbolrange):
+            if index == nrclasses-1:
+                classmax = len(sortedvalues)-1
+            else:
+                classmax = classmin+classsize
+            print classmin, classmax, len(sortedvalues)
+            #determine min and max value
+            minvalue = sortedvalues[classmin]
+            maxvalue = sortedvalues[classmax]
+            #create and add class
+            self.classes.append( _SymbolClass(classmin, classmax, minvalue, maxvalue, index, classsymbol) )
+            #prep for next
+            classmin = classmax
+    def _NaturalBreaks(self, symboltype, symbolrange, classifytype, nrclasses, excludevalues):
+        "taken from http://danieljlewis.org/files/2010/06/Jenks.pdf"
+        self.sortedvalues = sorted([(uniqid, value) for uniqid, value in self.values.iteritems() if value[symboltype] not in excludevalues], key=operator.itemgetter(1))
+        sortedvalues = [value[symboltype] for uniqid,value in self.sortedvalues]
+        lowerbound = sortedvalues[0]
+        upperbound = sortedvalues[-1]
+        def getJenksBreaks( dataList, numClass ):
+            "sorting is skipped, bc dataList is already sorted when getting the Jenks breaks"
+            mat1 = []
+            for i in range(0,len(dataList)+1):
+                temp = []
+                for j in range(0,numClass+1):
+                    temp.append(0)
+                mat1.append(temp)
+            mat2 = []
+            for i in range(0,len(dataList)+1):
+                temp = []
+                for j in range(0,numClass+1):
+                    temp.append(0)
+                mat2.append(temp)
+            for i in range(1,numClass+1):
+                mat1[1][i] = 1
+                mat2[1][i] = 0
+                for j in range(2,len(dataList)+1):
+                    mat2[j][i] = float('inf')
+            v = 0.0
+            for l in range(2,len(dataList)+1):
+                s1 = 0.0
+                s2 = 0.0
+                w = 0.0
+                for m in range(1,l+1):
+                    i3 = l - m + 1
+                    val = float(dataList[i3-1])
+                    s2 += val * val
+                    s1 += val
+                    w += 1
+                    v = s2 - (s1 * s1) / w
+                    i4 = i3 - 1
+                    if i4 != 0:
+                        for j in range(2,numClass+1):
+                            if mat2[l][j] >= (v + mat2[i4][j - 1]):
+                                mat1[l][j] = i3
+                                mat2[l][j] = v + mat2[i4][j - 1]  
+                mat1[l][1] = 1
+                mat2[l][1] = v         
+            k = len(dataList)
+            kclass = []
+            for i in range(0,numClass+1):
+                kclass.append(0)
+            kclass[numClass] = float(dataList[len(dataList) - 1])
+            countNum = numClass
+            while countNum >= 2:
+                #print "rank = " + str(mat1[k][countNum])
+                id = int((mat1[k][countNum]) - 2)
+                #print "val = " + str(dataList[id])
+                kclass[countNum - 1] = dataList[id]
+                k = int((mat1[k][countNum] - 1))
+                countNum -= 1
+            return kclass
+        #populate classes
+        jenksbreaks = getJenksBreaks(sortedvalues, nrclasses)
+        breaksgen = (each for each in jenksbreaks[1:-1]) #excluding first and last bc those are just endpoints
+        classmin = lowerbound
+        print symboltype, classifytype
+        for index, classsymbol in enumerate(symbolrange):
+            if index == nrclasses-1:
+                classmax = upperbound
+            else:
+                classmax = next(breaksgen)
+            print classmin, classmax, len(sortedvalues)
+            #determine min and max value
+            minvalue = classmin
+            maxvalue = classmax
+            #create and add class
+            self.classes.append( _SymbolClass(classmin, classmax, minvalue, maxvalue, index, classsymbol) )
+            #prep for next
+            classmin = classmax
+
+
 def _CheckOptions(customoptions):
     if not customoptions.get("fillcolor"):
         customoptions["fillcolor"] = Color()
@@ -878,15 +1161,34 @@ class NewMap:
     """Creates and returns a new map based on previously defined mapsettings."""
     def __init__(self):
         self.renderer = _Renderer()
-    def AddText(self, relx, rely, text, **textoptions):
-        textoptions = _CheckTextOptions(textoptions)
-        self.renderer._RenderText(relx, rely, text, textoptions)
+    def AddShape(self, shapeobj, **customoptions):
+        customoptions = _CheckOptions(customoptions)
+        self.renderer._RenderShape(shapeobj, customoptions)
     def AddToMap(self, shapefilepath, **customoptions):
         """Add a shapefile to the map.
         -shapefilepath is the path string of the shapefile to add.
         -customoptions is any series of named arguments of how to style the shapefile visualization (optional). Valid arguments are: fillcolor, fillsize (determines the circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth."""
         customoptions = _CheckOptions(customoptions)
-        self.renderer._RenderShapefile(shapefilepath, customoptions)
+        if customoptions.get("classifier"):
+            self._AutoClassifyShapefile(shapefilepath, customoptions.get("classifier"), customoptions)
+        else:
+            self.renderer._RenderShapefile(shapefilepath, customoptions)
+    def AddText(self, relx, rely, text, **textoptions):
+        textoptions = _CheckTextOptions(textoptions)
+        self.renderer._RenderText(relx, rely, text, textoptions)
+##    def AddLegend(self, relx, rely, classifier, text, **textoptions):
+##        "under construction..."
+##        textoptions = _CheckTextOptions(textoptions)
+##        #first legend box
+##        self.renderer._RenderRectangle(relNW, relSE, text, textoptions)
+##        #then legend title
+##        self.renderer._RenderText(relx, rely, text, textoptions)
+##        #for each class
+##        for eachclass in classifier:
+##            #symbol color/size
+##            #values text
+##            pass
+
     def ViewMap(self):
         """View the created map embedded in a Tkinter window. Map image can be panned, but not zoomed. Offers a 'save image' button to allow to interactively save the image"""
         self.renderer._ViewRenderedShapefile()
@@ -894,12 +1196,81 @@ class NewMap:
         """Save the map to an image file.
         -savepath is the string path for where you wish to save the map image. Image type extension must be specified ('.png','.gif',...)"""
         self.renderer._SaveRenderedShapefile(savepath)
+    ###INTERNAL USE ONLY
+    def _AutoClassifyShapefile(self, shapefilepath, classifier, options):
+        allclassifications = classifier.allclassifications
+        ####CLASSIFY ONE SHAPEFILE OPTION
+        #create shapefile
+        shapefile = Shapefile(shapefilepath)
+        #classify values into symbols
+        shapefile.progresstext = "classifying"
+        #first populate values from classification fields
+        for eachshape in shapefile:
+            row = dict(zip(shapefile.fieldnames, eachshape.GetAttributes()))
+            for classification in allclassifications:
+                field_to_classify = classification["valuefield"]
+                attributevalue = row[field_to_classify]
+                classifier.AddValue(eachshape.id, classification["symboltype"], attributevalue)
+        #then calculate classes
+        for classification in allclassifications:
+            classifier.CalculateClasses(classification["symboltype"],
+                                        classification["symbolrange"],
+                                        classifytype=classification["classifytype"],
+                                        nrclasses=classification["nrclasses"],
+                                        excludevalues=classification["excludevalues"])
+        ####RENDER THAT CLASSIFIED SHAPEFILE
+        #loop sorted/classified ids and get and render each
+        shapefile.progresstext = "rendering shapes"
+        for shape in shapefile:
+            #populate a custom options dict based on classifications
+            for classification in allclassifications:
+                symboltype = classification["symboltype"]
+                #retrieve class color for each shape id
+                symbol = classifier.GetSymbol(shape.id, symboltype)
+                if symbol:
+                    options[symboltype] = symbol
+            #render only if at least one of the options were successful
+            if options:
+                self.renderer._RenderShape(shape, options)
+
+        ####OR RENDER IN SORTED ORDER (NEED TO ADD CUSTOM SHAPE RENDERING ORDER AND SPECIAL SHAPE CACHING TO FILE BEFORE USING THIS BC GRABBING ONE SHAPE AT A TIME IS CURRENTLY QUITE SLOW)
+        "finish this later..."
+##        #loop sorted/classified ids and get and render each
+##        for uniqid, value in messages.ProgressReport(classifier.GetValues(), text="rendering shapes"):
+##            #populate a custom options dict based on classifications
+##            for classification in allclassifications:
+##                symboltype = classification["symboltype"]
+##                #retrieve class color for each shape id
+##                symbol = classifier.GetSymbol(uniqid, symboltype)
+##                if symbol:
+##                    options[symboltype] = symbol
+##            #render only if at least one of the options were successful
+##            if options:
+##                shape = shapefile.GetShape(uniqid)
+##                self.renderer._RenderShape(shape, options)
+
+        ####FINALLY ADD LABELS FOR THAT SHAPEFILE
+        "need more work here........."
+##        #loop through shapefile
+##        shapefile.progresstext = "adding labels"
+##        for eachshape in shapefile:
+##            #populate a custom options dict based on classifications
+##            for classification in allclassifications:
+##                symboltype = classification["symboltype"]
+##                #retrieve class color for each shape id
+##                symbol = classifier.GetSymbol(eachshape.id, symboltype)
+##                if symbol:
+##                    options[symboltype] = symbol
+##            #render only if at least one of the options were successful
+##            if options:
+##                #LABEL TEXT
+##                textoptions = _CheckTextOptions(dict([("textsize",20)]))
+##                x,y = eachshape._MapCoords([eachshape.GetCenter()])
+##                relx, rely = (x/float(MAPWIDTH), y/float(MAPHEIGHT))
+##                self.AddText(relx, rely, str(eachshape.id), **textoptions)
+
 
 #MAP SPECS
-##def SetMapTitle(maptitle):
-##    "not yet used..."
-##    global MAPTITLE
-##    MAPTITLE = maptitle
 def SetMapDimensions(width, height):
     """Sets the width and height of the next map. At startup the width and height are set to the dimensions of the window screen.
     -width/height must be integers."""

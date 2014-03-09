@@ -1,5 +1,24 @@
 NEXT UP:
 
+X Add fisher jenks classification
+
+- Add categorical classification
+- Add single symbol classification
+
+- Fix weird thing where self.classes only saves most recent classification, need to save classes of all classifications. SOLUTION: just pass the entire classification dictionary instead of specifying each argument, that way classes can be added to each classification dictionary and accessed later. While at it also sort out where the default classification stuff should be set(should be in AddClassification, bc CalculateClasses should never really be used directly so should only receive the dictionary)...
+- Add freeform rectangle/line/circle functions
+- Add Legend function
+
+- Add philosophy section to README (about syntax policy and reasons behind it eg arcpy legacy)
+
+- Add simple zoomextent, by testing each shape for bbox in extent before rendering
+- Add Labels function with variable size/color/etc
+
+- Enable partial transparency and invisible (None) when rendering symbols...
+- Find way to calculate symbolsizes as percentage of mapsize instead of absolute pixel value
+- Add numpy way to GetCenter in PyShpShape 
+- Add possibility to set a renderorder based on a classification (similar to setting a symboltype like fillsize), and make a faster indexed way of rendering in sorted order (maybe by building my own indexfile of byte position of each shape). This bc sorted order rendering is slow bc grabs one shape at a time which is slower, as opposed to iterShapes().
+
 - Find way to determine whether / or \ is correct path splitter
 - Add simple way to render text, default font, and place it to relative xy location
 - Add support for viewing shapefiles with the PyCairo renderer.
