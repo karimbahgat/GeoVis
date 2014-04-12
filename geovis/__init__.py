@@ -1389,8 +1389,23 @@ class _Renderer:
         customoptions = self._RelSizesToPixels(customoptions)
         self.renderer.RenderShape(shape, customoptions)
     def _RenderShapefile(self, shapefilepath, customoptions):
+        "this one loads a filepath from scratch, does not take preloaded layers"
         #create shapefile generator
         shapefile = Shapefile(shapefilepath)
+        #exclude values if specified
+        excludequery = customoptions.get("excludequery")
+        if excludequery:
+            shapefile.SelectByQuery(excludequery, inverted=True)
+        #then iterate through shapes and render each
+        shapefile.progresstext = "rendering"
+        for eachshape in shapefile:
+            #then send to be rendered
+            self._RenderShape(eachshape, customoptions)
+    def _RenderLayer(self, layer):
+        "renders a preloaded layer"
+        #create shapefile generator
+        shapefile = layer.fileobj
+        customoptions = layer.customoptions
         #exclude values if specified
         excludequery = customoptions.get("excludequery")
         if excludequery:
@@ -1589,6 +1604,66 @@ A generator that will loop through a folder and all its subfolder and return inf
 """
     for eachfolder, eachshapefile, eachfiletype in _FolderLoop(folder, filetype=".shp"):
         yield (eachfolder, eachshapefile, eachfiletype)
+
+class Layer:
+    """
+Creates and returns a thematic layer instance (a visual representation of a geographic file) that can be symbolized and used to add to a map.
+
+**Arguments:**
+
+| __option__    | __description__
+| --- | ---
+| filepath | the path string of the geographic file to add.
+| **customoptions | any series of named arguments of how to style the shapefile visualization (optional). Valid arguments are: fillcolor, fillsize (determines the circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth.
+"""
+    def __init__(self, filepath, **customoptions):
+        self.filepath = filepath
+        self.fileobj = Shapefile(shapefilepath=filepath, progresstext="loading layer")
+        self.customoptions = _CheckOptions(customoptions)
+        self.classifier = Classifier()
+    def AddClassification(self, symboltype, valuefield, symbolrange=None, classifytype="equal interval", nrclasses=5):
+        """
+Adds a classification/instruction to the layer on how to symbolize a particular symbol part (e.g. fillcolor) based on a shapefile's attribute values.
+
+**Arguments:**
+
+| __option__    | __description__ | __input__
+| --- | ---
+| symboltype | a string indicating which type of symbol the classification should apply to. | 
+
+Valid symboltypes are:
+
+- "fillsize"
+  the size of a circle, square, pyramid, or the thickness of a line
+- "fillwidth"
+  currently only used for the width of a pyramid when using the pyramid symbolizer
+- "fillheight"
+  currently has no use
+- "fillcolor"
+- "outlinewidth"
+   the width of the outline if any
+- "outlinecolor"
+
+| valuefield | a string with the name of a shapefile attribute field whose values will be used to inform the classification. | string
+| symbolrange | a list or tuple of the range of symbol values that should be used for the symbol type being classified. You only need to assign the edge/breakpoints in an imaginary gradient of symbol values representing the transition from low to high value classes; the values in between will be interpolated if needed. The symbol values must be floats or integers when classifying a size-based symbol type, or hex color strings when classifying a color-based symbol type. | list or tuple
+| classifytype | a string with the name of the mathematical algorithm used to calculate the break points that separate the classes in the attribute values. |
+
+Valid classifytypes are: 
+
+- "categorical"
+  assigns a unique class/symbol color to each unique attribute value, so can only be used when classifying color-based symbol types
+- "equal classes"
+  makes sure that there are equally many features in each class, which means that features with the same attribute values can be found in multiple classes
+- "equal interval"
+  classes are calculated so that each class only contains features that fall within a value range that is equally large for all classes
+- "natural breaks"
+  the Fisher-Jenks natural breaks algorithm, adapted from the Python implementation by Daniel J. Lewis (http://danieljlewis.org/files/2010/06/Jenks.pdf), is used to find 'natural' breaks in the shapefile dataset, i.e. where the value range within each class is as similar as possible and where the classes are as different as possible from each other. This algorithm is notorious for being slow for large datasets, so for datasets larger than 1000 records the calculation will be limited to a random sample of 1000 records (thanks to Carston Farmer for that idea, see: http://www.carsonfarmer.com/2010/09/adding-a-bit-of-classification-to-qgis/), and in addition that calculation will be performed 6 times, with the final break points being the sample mean of all the calculations. For large datasets this means that the natural breaks algorithm and the resultant map classification may turn out differently each time; however, the results should be somewhat consistent especially due to the random nature of the approach and the multiple sample means
+
+| nrclasses | an integer or float for how many classes to subdivide the data and symbol values into. | Integer or float
+
+"""
+        self.classifier.AddClassification(symboltype, valuefield, symbolrange=symbolrange, classifytype=classifytype, nrclasses=nrclasses)
+        
         
 #RENDERING OPTIONS
 def SetRenderingOptions(renderer="not set", numpyspeed="not set", reducevectors="not set"):
@@ -1698,49 +1773,7 @@ This classifier is also needed to render a shapefile's legend.
         self.symbols = dict()
         self.allclassifications = []
         self.name = "unnamed classifier"
-    def AddClassification(self, symboltype, valuefield, symbolrange=None, classifytype="equal interval", nrclasses=5):
-        """
-
-Adds a classification/instruction to the classifier on how to symbolize a particular symbol part (e.g. fillcolor) based on a shapefile's attribute values.
-
-**Arguments:**
-
-| __option__    | __description__ | __input__
-| --- | ---
-| symboltype | a string indicating which type of symbol the classification should apply to. | 
-
-Valid symboltypes are:
-
-- "fillsize"
-  the size of a circle, square, pyramid, or the thickness of a line
-- "fillwidth"
-  currently only used for the width of a pyramid when using the pyramid symbolizer
-- "fillheight"
-  currently has no use
-- "fillcolor"
-- "outlinewidth"
-   the width of the outline if any
-- "outlinecolor"
-
-| valuefield | a string with the name of a shapefile attribute field whose values will be used to inform the classification. | string
-| symbolrange | a list or tuple of the range of symbol values that should be used for the symbol type being classified. You only need to assign the edge/breakpoints in an imaginary gradient of symbol values representing the transition from low to high value classes; the values in between will be interpolated if needed. The symbol values must be floats or integers when classifying a size-based symbol type, or hex color strings when classifying a color-based symbol type. | list or tuple
-| classifytype | a string with the name of the mathematical algorithm used to calculate the break points that separate the classes in the attribute values. |
-
-Valid classifytypes are: 
-
-- "categorical"
-  assigns a unique class/symbol color to each unique attribute value, so can only be used when classifying color-based symbol types
-- "equal classes"
-  makes sure that there are equally many features in each class, which means that features with the same attribute values can be found in multiple classes
-- "equal interval"
-  classes are calculated so that each class only contains features that fall within a value range that is equally large for all classes
-- "natural breaks"
-  the Fisher-Jenks natural breaks algorithm, adapted from the Python implementation by Daniel J. Lewis (http://danieljlewis.org/files/2010/06/Jenks.pdf), is used to find 'natural' breaks in the shapefile dataset, i.e. where the value range within each class is as similar as possible and where the classes are as different as possible from each other. This algorithm is notorious for being slow for large datasets, so for datasets larger than 1000 records the calculation will be limited to a random sample of 1000 records (thanks to Carston Farmer for that idea, see: http://www.carsonfarmer.com/2010/09/adding-a-bit-of-classification-to-qgis/), and in addition that calculation will be performed 6 times, with the final break points being the sample mean of all the calculations. For large datasets this means that the natural breaks algorithm and the resultant map classification may turn out differently each time; however, the results should be somewhat consistent especially due to the random nature of the approach and the multiple sample means
-
-| nrclasses | an integer or float for how many classes to subdivide the data and symbol values into. | Integer or float
-
-"""
-        
+    def AddClassification(self, symboltype, valuefield, symbolrange=None, classifytype="equal interval", nrclasses=5):        
         if not symbolrange and classifytype!="categorical":
             raise TypeError("since you have chosen a gradual classification you must specify a range of symbol values to choose from")
         classification = dict([("symboltype",symboltype),
@@ -2146,26 +2179,27 @@ Creates and returns a new map based on previously defined mapsettings.
     def AddShape(self, shapeobj, **customoptions):
         customoptions = _CheckOptions(customoptions)
         self.renderer._RenderShape(shapeobj, customoptions)
-    def AddToMap(self, shapefilepath, **customoptions):
+    def AddToMap(self, layer):
         """
-Add a shapefile to the map.
+Add and render a layer instance to the map.
 
 **Arguments:**
 
 | __option__    | __description__
 | --- | ---
-| shapefilepath | the path string of the shapefile to add.
-| **customoptions | any series of named arguments of how to style the shapefile visualization (optional). Valid arguments are: fillcolor, fillsize (determines the circle size for point shapefiles, line width for line shapefiles, and has no effect for polygon shapefiles), outlinecolor, outlinewidth.
+| layer | the layer instance from the CreateLayer function that you wish to add to the map
 """
-        customoptions = _CheckOptions(customoptions)
-        if customoptions.get("classifier"):
-            self._AutoClassifyShapefile(shapefilepath, customoptions.get("classifier"), customoptions)
+        if layer.classifier:
+            self._AutoClassifyShapefile(layer)
         else:
-            self.renderer._RenderShapefile(shapefilepath, customoptions)
-    def AddLegend(self, upperleft, bottomright, classifier, legendtitle="not specified", boxcolor=Color("gray",brightness=0.8), boxoutlinecolor=Color("black"), boxoutlinewidth=0.08):
+            self.renderer._RenderLayer(layer)
+    def AddLegend(self, layer, x2x, y2y, legendtitle="not specified", boxcolor=Color("gray",brightness=0.8), boxoutlinecolor=Color("black"), boxoutlinewidth=0.08):
         """
-Draws a basic primitive legend based on an input classifier object.
+Draws a basic legend based on an input classifier object.
 """
+        classifier = layer.classifier
+        upperleft = x2x[0],y2y[0]
+        bottomright = x2x[1],y2y[1]
         #first set positions
         relx1,rely1 = upperleft
         relx2,rely2 = bottomright
@@ -2337,11 +2371,14 @@ Save the map to an image file.
 """
         self.renderer._SaveRenderedShapefile(savepath)
     ###INTERNAL USE ONLY
-    def _AutoClassifyShapefile(self, shapefilepath, classifier, options):
-        allclassifications = classifier.allclassifications
+    def _AutoClassifyShapefile(self, layer):
+        shapefilepath = layer.filepath
+        classifier = layer.classifier
+        options = layer.customoptions
         ####CLASSIFY ONE SHAPEFILE OPTION
+        allclassifications = classifier.allclassifications
         #create shapefile
-        shapefile = Shapefile(shapefilepath)
+        shapefile = layer.fileobj
         classifier.name = shapefile.filename
         classifier.symbolizer = options.get("symbolizer")
         #exclude values if specified
