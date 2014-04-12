@@ -1,0 +1,63 @@
+
+REMAINING TASKS UNTIL NEXT RELEASE:
+
+- Add docstrings for all new features (REMAINING: AddLegend, AddText, DrawRectangle, DrawCircle, DrawLine, all the AskX functions, and the new excludequery and symbolizer and classifier options in newmap.AddToMap)
+- Reformat all docstrings to markdown format, so can easily be looped and written directly to a markdown documentation text file.
+
+- Add mapzoom, almost there except map/image proportions bc only the width has the priority and a long width can stretch image
+- fix error with drawing point symbolizer items when zooming
+- maybe move zoom shape test to renderer class instead of inside shapefile...
+- Maybe add a little thing indicating the imagesize, and a paranthesis with text if image was too big for screen so has been downsized just for viewing purposes.
+- Force mapdimensions to always be half eachothers size, so not to distort the map with screendims or manual user input
+- Add textsize factor option for AddLegend
+- Finally figure out legend functionality, how add legend to basic shapefiles(nonclassified), and how customize everything?
+- Change license type both in script, and in README
+- Fix normal (non-numpy) mapcoords error...
+
+- ADD TO DOCS HOW TO MAKE YOUR OWN LEGEND FROM SCRATCH...
+- ADD TO DOCS THAT IN PYCAIRO DRAWLINE IS ALWAYS BLACK, WEIRD ERROR, THUS PYCAIRO IS NOT FULLY SUPPORTED FOR X FEATURES...??? WHICH ONES? "PyCairo resulted in several errors that made it difficult to make compatible with all the other renderers, so support for it has been temporarily discontinued. All of the previous functions should work, but the new ones cannot be guaranteed."
+- ADD TO DOCS THAT PIL AND TKINTER DOES NOT SUPPORT OUTLINE WIDTH SO THEIR OUTLINES WILL ALWAYS BE 1 PIXEL THICK, SINCE THEY ONLY HAVE OUTLINE COLOR OPTION BUT NOT OUTLINEWIDTH OPTION...
+- ADD TO DOCS ABOUT PLAYING WITH SYMBOLS, AND THE AVAILABLE SYMBOL OPTIONS AND VALUES
+- ADD TO DOCS A PHILOSOPHY/SYNTAX SECTION
+- ADD TO DOCS A CONTRIBUTORS SECTION OF WHAT CONTRIBUTORS CAN HELP WITH (EG NEW SYMBOLIZERS OR MAKING LINES SMOOTHER BY USING A DRAWPATH), AND A DRAWING IN THE CONTRIBUTORS SECTION OF THE INNER WORKINGS OF GEOVIS AND WHERE THINGS COME FROM/PASS BY/GO TO.
+
+WAITING UNTIL NEXT TIME, ERRORS TO FIX:
+
+- CHECK OUT cntry_code categorical classification error
+- Make so if adding multiple classifications of same symboltype then replace the older one
+
+WAITING UNTIL NEXT TIME, FEATURES TO ADD:
+
+- Is there a way to make classification sizes be mapped not linearly based on class rank, bur as percent of class midpoint compared to highest class midpoint (thus instead of interpolating symbolrange to nr of classes, interpolate to 100 percent and choose symbol index based on midpoint percent). Maybe that's what's known as proportional, except for all values instead of in classes. Use it by setting class2symbol="proportional" instead of "linear", or by saying proportional as classifytype. 
+- MAYBE DISCONTINUE SUPPORT FOR PYCAIRO...?
+- Maybe even change color interpolation to homebrewed blending based on stackoverflow answer. This would need rgb instead of hex so might require the Color() function to return the colour object with possibility to make into any of rgb, hex, hsv, etc. Reason, some might think HSV interpolation is prettier but it is also less intuitive depending on which color range is being used (eg blue to red will pass through green and yellow), pluss no reason to force it, user can still just add yellow or whatever else color in between if they want: http://stackoverflow.com/questions/10901085/python-range-values-to-pseudocolor
+- Also function to add gridlines, should be simple
+- How about making the shapefile object more powerful so give it a selection method, a save method, and a split by method. Also possibility to create an empty shapefile by not specifying a shapefilepath, and then possible to build by using either shapely objects or manual coordinate lists.
+- Add philosophy section to README (about syntax policy and reasons behind it eg arcpy legacy)
+- Add simple zoomextent, by testing each shape for bbox in extent before rendering
+- Add Labels function with variable size/color/etc
+
+LONG TERM:
+
+- Enable partial transparency when rendering things...
+- Add numpy way to GetCenter in PyShpShape 
+- Add possibility to set a renderorder based on a classification (similar to setting a symboltype like fillsize), and make a faster indexed way of rendering in sorted order (maybe by building my own indexfile of byte position of each shape). This bc sorted order rendering is slow bc grabs one shape at a time which is slower, as opposed to iterShapes().
+- At some point maybe add ability to save classifications and layer symbols to pickle file, and potential for loading later on.
+
+- Find way to determine whether / or \ is correct path splitter
+- Add support for viewing shapefiles with the PyCairo renderer.
+- Add some more example scripts?
+- Add simple support for Python 3
+
+- Add single symbol classification
+- Add ability to zoom in to a certain extent instead of showing the entire world. 
+- Add multiprocessing support (e.g. dividing up list of features to be rendered and then merging all partially rendered maps)
+- Add support for projected shapefiles and to change coordinate system/projection of your map. 
+
+ABANDONED:
+
+/- Major question: force classifier to only one algorithm by specifying at startup, or allow potentially creative but chaotic and pointless multiple algorithms for each symbol part.
+/--- step1: classifytype, nrclasses, and excludevalues have to be moved from classification dict and made into Classifier self.object properties
+/--- step2: Classes should be moved back to a single property instead of an entry in each classification dict.
+/--- step3: AddClassification renamed to AddSymbolRule (also self.allclassifications, etc)
+/--- step4: SymbolClass must be made to store entire options dictionary, not just a single classsymbol property.

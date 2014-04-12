@@ -122,7 +122,7 @@ randommattecolor = geovis.Color(style="matte")
 Assuming you now know how to set your own colors or color styles, these colors are useful since they can be used to specify the color of any number of symbol options passed as keyword arguments to GeoVis' various rendering functions (see the documentation for a full list of changable symbol options). For instance, let's save a shapefile image as before, but this time set the fillcolor of the shapefile polygons/lines/circles to our strong-dark-red that we defined previously. In addition we will increase the outline width to match the strong fillcolor (we leave the outline *color* to its defaul black since this fits with the map):
 
 ```python
-geovis.SaveShapefileImage(("C:/shapefile.shp",
+geovis.SaveShapefileImage("C:/shapefile.shp",
                    savepath="C:/output_picture.png",
                    fillcolor=strongdarkred,
                    outlinewidth=5)

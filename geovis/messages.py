@@ -4,6 +4,21 @@ import sys, pickle, Queue
 from textual import txt
 import timetaker as timer
 
+def SnapVars(onlyvars=[], excludevars=[]):
+    """
+not working yet bc only snaps local vars...
+"""
+    print ("snapshot of variables:")
+    print ("----------------------")
+    if onlyvars: allvars = onlyvars
+    else: allvars = dir()
+    for var in allvars:
+        if not var.startswith("__"):
+            if var in excludevars:
+                continue
+            val = eval(var)
+            print ("%s = %s"%(var,val))
+
 def Report(text, conditional=True):
     if isinstance(text, list):
         text = [txt(eachitem) for eachitem in text]

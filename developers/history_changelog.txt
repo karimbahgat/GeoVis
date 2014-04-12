@@ -1,0 +1,29 @@
+Version 2.0 (...):
+
+- Add simple way to render text, default font, and place it to relative xy location
+- Add an easy way for the user to automatically classify and visualize individual shapefile features based on their underlying data values. User can use different classifications for different symbol parts of the shapefile (eg size based on some numbers field and categorical based on some country field). Each feature's value will be mapped to a user-specifed range of numbers or colorgradient (for the cologradient the user only specifies the colorstops/endpoints).
+- Add fisher jenks classification, and optimized for large datasets
+- Add categorical classification
+- Also fix error where nat breaks always uses 0 as lowest breakpoint instead of min value from list
+- Fix weird thing where self.classes only saves most recent classification, need to save classes of all classifications. SOLUTION: just pass the entire classification dictionary instead of specifying each argument, that way classes can be added to each classification dictionary and accessed later. While at it also sort out where the default classification stuff should be set(should be in AddClassification, bc _CalculateClasses should never really be used directly so should only receive the dictionary)...
+- Finally also make PIL renderer make 2x bigger image and then downsize/2 with Antialias filter to make it smoother. ALSO NOTE THAT IN PIL ALL SYMBOLSIZES ARE HALF AS SMALL BC MAP IS UPSCALED 2X, SO NEED TO TIMES ALL SYMBOL SIZES BY TWO UPON ENTERING
+- Add freeform rectangle/line/circle functions
+- Also add new point symbol types like pyramid and square
+- Enable invisible (None) when rendering symbol parts. WORKS, EXCEPT FOR LINES WHERE OUTLINE IS IN FACT A FILLED LINE BEHIND THE FILL LINE, Fix in future version
+- Make possible to specify background box when adding text
+- Possible to make, invert, and clear a selection on a shapefile so will only loop through those whose attributes evaluate to true according to the query. Query takes ordinary Python syntax and case sensitive fieldnames. 
+- Add visual choice functions for colors, nrs, strings, and files for easier explorative/interactive usage (such as the AskColor function)
+- Add ability to exclude values when adding a shapefile to a newmap object, by asking for string expressions that can be used with an exec() function
+- Add outline around interactive map.
+- Find way to calculate symbolsizes as percentage of mapsize instead of absolute pixel value. SOLUTION: user gives relative fraction of screen, and then that gets timed with the screen to get pixel size! Only question is whether to do it relative to width or height (or maybe even area of screen covered by whichever symbol...)
+- Add symbolizer option when adding to map, which regardless of shapetype, determines what kind of graphics to be classified and used for symbolization, such as "circle","square","pyramid","picture","pyramidscape",etc. Default is basiccircle for points, basicline for lines(only available for lines), and polygon for polygons(only available for polygons). This is mostly used to force using those as symbols at centerpoints of polygon and line features, or for deciding which type of point symbol. Dont specify to use shapefile default.
+- Clean up/remove/move ColorGradient function to the listy strech function. 
+- Add Legend function, it simply needs to loop thru each class of the classifier and use the class options dictionary to create an exact copy in the legend.
+- Gave the save map button an image icon instead of just text
+
+Version 1.0 (25.February 2014):
+
+- Basic functionality
+- One liners for shapefile viewing and map saving
+- Multiple layers custom map creation
+- Customize each shapefile with colors and fillsize
