@@ -1364,7 +1364,7 @@ class _Renderer:
             customoptions["maptitle"] = shapefilename
         #unless asked not to show maptitle, generate default textoptions except large text size
         if customoptions.get("maptitle"):
-            textoptions = _CheckTextOptions(dict([("textsize",50)]))
+            textoptions = _CheckTextOptions(dict([("textsize",0.0452)]))
             self._RenderText(0.5, 0.05, customoptions["maptitle"], textoptions)
     def _RenderText(self, relx, rely, text, textoptions):
         self.renderer.RenderText(relx, rely, text, textoptions)
@@ -2061,7 +2061,15 @@ def _CheckTextOptions(customoptions):
     if not customoptions.get("textfont"):
         customoptions["textfont"] = "default"
     if not customoptions.get("textsize"):
-        customoptions["textsize"] = 7
+        customoptions["textsize"] = MAPWIDTH*0.0055 #equivalent to textsize 7
+    else:
+        #input is percent textheight of MAPWIDTH
+        percentheight = customoptions["textsize"]
+        #so first get pixel height
+        pixelheight = MAPWIDTH*percentheight
+        #to get textsize
+        textsize = int(round(pixelheight*0.86))
+        customoptions["textsize"] = textsize
     if not customoptions.get("textcolor"):
         customoptions["textcolor"] = Color("black")
     if not customoptions.get("textopacity"):
@@ -2180,7 +2188,7 @@ Draws a basic primitive legend based on an input classifier object.
         if legendtitle:
             if legendtitle == "not specified":
                 legendtitle = classifier.name
-            titleoptions = dict([("textsize",25),
+            titleoptions = dict([("textsize",0.023),
                                  ("textboxfillcolor",Color("white")),
                                  ("textboxfillsize",1.2),
                                  ("textanchor","s")])
@@ -2196,10 +2204,10 @@ Draws a basic primitive legend based on an input classifier object.
             relyincr = legendheight/float(len(classes)+2)
             #place symbol fieldname source
             rely = rely1+(relyincr/2.0)
-            self.AddText(relx, rely, text=classification.get("valuefield"), textsize=14, textboxfillcolor=None, textboxoutlinecolor=None)
+            self.AddText(relx, rely, text=classification.get("valuefield"), textsize=0.0127, textboxfillcolor=None, textboxoutlinecolor=None)
             #place symboltype text
             rely += relyincr/2.0
-            self.AddText(relx, rely, text="(%s)"%symboltype, textsize=14, textboxfillcolor=None, textboxoutlinecolor=None)
+            self.AddText(relx, rely, text="(%s)"%symboltype, textsize=0.0127, textboxfillcolor=None, textboxoutlinecolor=None)
             rely += relyincr/2.0
             tempwidth = relxincr
             xtox = (relx-tempwidth/2.0,relx+tempwidth/2.0)
@@ -2219,7 +2227,7 @@ Draws a basic primitive legend based on an input classifier object.
                         textlabel = "%s - %s" %(eachclass.min,eachclass.max)
                     else:
                         textlabel = "%s" %eachclass.min
-                    self.AddText(rightpart.center[0],rely+relyincr/2.0,text=textlabel, textsize=12)
+                    self.AddText(rightpart.center[0],rely+relyincr/2.0,text=textlabel, textsize=0.0111)
                 elif symboltype == "fillsize":
                     if symbolizer:
                         if symbolizer == "circle":
@@ -2235,7 +2243,7 @@ Draws a basic primitive legend based on an input classifier object.
                                 textlabel = "%s - %s" %(eachclass.min,eachclass.max)
                             else:
                                 textlabel = "%s" %eachclass.min
-                            self.AddText(rightpart.center[0], rely+relyincr*(len(classes)+1)-symbolheight, text=textlabel, textsize=12)
+                            self.AddText(rightpart.center[0], rely+relyincr*(len(classes)+1)-symbolheight, text=textlabel, textsize=0.0111)
                         elif symbolizer == "square":
                             tempoptions = _CheckOptions(dict(fillsize=symbol, fillcolor=None, symbolizer=symbolizer))
                             symbolheight = self.renderer._RelSizesToPixels(tempoptions)["fillsize"]/float(MAPHEIGHT)
@@ -2249,7 +2257,7 @@ Draws a basic primitive legend based on an input classifier object.
                                 textlabel = "%s - %s" %(eachclass.min,eachclass.max)
                             else:
                                 textlabel = "%s" %eachclass.min
-                            self.AddText(rightpart.center[0], rely+relyincr*(len(classes)+1)-symbolheight, text=textlabel, textsize=12)
+                            self.AddText(rightpart.center[0], rely+relyincr*(len(classes)+1)-symbolheight, text=textlabel, textsize=0.0111)
                         elif symbolizer == "pyramid":
                             tempoptions = _CheckOptions(dict(fillsize=symbol, fillcolor=None, symbolizer=symbolizer))
                             symbolheight = self.renderer._RelSizesToPixels(tempoptions)["fillsize"]/float(MAPHEIGHT)
@@ -2263,7 +2271,7 @@ Draws a basic primitive legend based on an input classifier object.
                                 textlabel = "%s - %s" %(eachclass.min,eachclass.max)
                             else:
                                 textlabel = "%s" %eachclass.min
-                            self.AddText(rightpart.center[0], rely+relyincr*(len(classes)+1)-symbolheight, text=textlabel, textsize=12)
+                            self.AddText(rightpart.center[0], rely+relyincr*(len(classes)+1)-symbolheight, text=textlabel, textsize=0.0111)
                     else:
                         tempoptions = _CheckOptions(dict(fillsize=symbol, fillcolor=None, symbolizer=symbolizer))
                         symbolheight = self.renderer._RelSizesToPixels(tempoptions)["fillsize"]/float(MAPHEIGHT)
@@ -2277,7 +2285,7 @@ Draws a basic primitive legend based on an input classifier object.
                             textlabel = "%s - %s" %(eachclass.min,eachclass.max)
                         else:
                             textlabel = "%s" %eachclass.min
-                        self.AddText(rightpart.center[0], rely+relyincr*(len(classes)+1)-symbolheight, text=textlabel, textsize=12)
+                        self.AddText(rightpart.center[0], rely+relyincr*(len(classes)+1)-symbolheight, text=textlabel, textsize=0.0111)
                 elif symboltype == "outlinecolor":
                     tempwidth = (relx+relxincr-relx)/3.0
                     startpos, endpos = ((leftpart.w[0],rely+relyincr/2.0),(leftpart.e[0],rely+relyincr/2.0))
@@ -2287,7 +2295,7 @@ Draws a basic primitive legend based on an input classifier object.
                         textlabel = "%s - %s" %(eachclass.min,eachclass.max)
                     else:
                         textlabel = "%s" %eachclass.min
-                    self.AddText(rightpart.center[0],rely+relyincr/2.0,text=textlabel, textsize=12)
+                    self.AddText(rightpart.center[0],rely+relyincr/2.0,text=textlabel, textsize=0.0111)
                 elif symboltype == "outlinewidth":
                     tempwidth = (relx+relxincr-relx)/3.0
                     startpos, endpos = ((leftpart.w[0],rely+relyincr/2.0),(leftpart.e[0],rely+relyincr/2.0))
@@ -2297,7 +2305,7 @@ Draws a basic primitive legend based on an input classifier object.
                         textlabel = "%s - %s" %(eachclass.min,eachclass.max)
                     else:
                         textlabel = "%s" %eachclass.min
-                    self.AddText(rightpart.center[0],rely+relyincr/2.0,text=textlabel, textsize=12)
+                    self.AddText(rightpart.center[0],rely+relyincr/2.0,text=textlabel, textsize=0.0111)
                 rely += relyincr
             relx += relxincr
     def AddText(self, relx, rely, text, **textoptions):
