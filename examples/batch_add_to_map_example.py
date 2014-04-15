@@ -3,17 +3,8 @@ Example Script for the Python Geographic Visualizer (GeoVis)
 https://github.com/karimbahgat/geovis
 """
 
-############
-#TEST INPUTS
-############
-TEMP_GEOVIS_FOLDER = r"C:\Users\BIGKIMO\Documents\GitHub\geovis"
-MAPCOLORSTYLE = "pastelle"
-BASE_SHAPEFILE = "D:\Test Data\Global Subadmins\gadm2.shp"
-MANY_SHAPEFILES_FOLDER = r"D:\Test Data\DHS GPS"
-############
-
-
 #importing geovis from temporary location
+TEMP_GEOVIS_FOLDER = r"C:\Users\BIGKIMO\Documents\GitHub\geovis"
 import sys
 sys.path.append(TEMP_GEOVIS_FOLDER)
 import geovis
@@ -22,18 +13,21 @@ import geovis
 geovis.SetRenderingOptions(reducevectors=True)
 
 #create map
-geovis.SetMapBackground(geovis.Color(style=MAPCOLORSTYLE))
+MAPCOLORSTYLE = "pastelle"
+geovis.SetMapBackground(geovis.Color("blue",style=MAPCOLORSTYLE))
 newmap = geovis.NewMap()
 
 #add base shapefile layer
-newmap.AddToMap(BASE_SHAPEFILE)
+base_layer = geovis.Layer("D:\Test Data\Global Subadmins\gadm2.shp")
+newmap.AddToMap(base_layer)
 
 #overlay with a folder of many shapefiles
-for eachfolder, eachfile, eachext in geovis.ShapefileFolder(MANY_SHAPEFILES_FOLDER):
-    newmap.AddToMap(eachfolder+eachfile+eachext, style=MAPCOLORSTYLE)
+for eachfolder, eachfile, eachext in geovis.ShapefileFolder(r"D:\Test Data\DHS GPS"):
+    eachlayer = geovis.Layer(filepath=eachfolder+eachfile+eachext, fillcolor=geovis.Color("random", style=MAPCOLORSTYLE))
+    newmap.AddToMap(eachlayer)
 
 #add title
-newmap.AddText(0.5, 0.1, text="Batch Map Example", textsize=40)
+newmap.AddText(relx=0.5, rely=0.1, text="Batch Map Example", textsize=0.06)
 
 #finally view the map
 newmap.ViewMap()
