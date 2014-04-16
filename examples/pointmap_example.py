@@ -34,7 +34,7 @@ pointlayer.AddClassification(symboltype="fillsize", valuefield="nwound", symbolr
 newmap.AddToMap(countrylayer)
 newmap.AddToMap(pointlayer)
 #add legend
-newmap.AddLegend(pointlayer, x2x=(0.5,0.9), y2y=(0.7,0.9))
+newmap.AddLegend(pointlayer, upperleft=(0.5,0.7), bottomright=(0.9,0.9))
 #view map
 newmap.ViewMap()
 

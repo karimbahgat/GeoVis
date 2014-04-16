@@ -15,7 +15,7 @@ Python Geographic Visualizer (GeoVis) is a standalone geographic visualization m
 
 - April 15, 2014: New v0.2.0 released, major update. 
   - New features:
-    - Symbolize shapefiles based on their attributes and add legend (equal classes, equal interval, natural breaks)
+    - Symbolize shapefiles based on their attributes and add legend (categorical, equal classes, equal interval, natural breaks)
     - Choose between multiple symbolizer icons: circle, square, pyramid
     - Zoom the map to a region of interest
     - Manually draw basic geometries and write text on map

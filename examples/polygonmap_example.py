@@ -34,7 +34,7 @@ riverlayer = geovis.Layer(filepath=r"D:\Test Data\lines\ne_50m_rivers_lake_cente
 newmap.AddToMap(countrylayer)
 newmap.AddToMap(riverlayer)
 #add legend
-newmap.AddLegend(countrylayer, x2x=(0.03,0.6), y2y=(0.15,0.4))
+newmap.AddLegend(countrylayer, upperleft=(0.03,0.15), bottomright=(0.6,0.4))
 #view map
 newmap.ViewMap()
 
