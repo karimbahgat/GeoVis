@@ -85,7 +85,7 @@ Assuming you have already installed it as described in the Installation section,
 import geovis
 ```
 
-To begin using geovis either check out the full list of commands in the [the USER_MANUAL](../blob/master/USER_MANUAL.md), or keep reading below for a basic introduction. 
+To begin using geovis either check out the full list of commands in the [the USER_MANUAL](../master/USER_MANUAL.md), or keep reading below for a basic introduction. 
 
 ### Instant Mapping
 If you are simply wanting to inspect some shapefile interactively, or for seeing how your processed shapefile turned out, then you do this with a simple one-liner:
@@ -208,11 +208,10 @@ for eachfolder, eachshapefile, eachfiletype in geovis.ShapefileFolder(r"D:\Test 
 
 The filename, parent-folder, and file extension can be played around with to do many other batch operations as well, such as placing each map image next to (in the same folder as) each shapefile. 
 
-This brief introduction has only covered the most essential functionality of GeoVis. For the full list of commands and arguments check out [the USER_MANUAL](../blob/master/USER_MANUAL.md). 
-
 
 ## Help and Documentation
-If you need more information about or are experiencing problems with a particular function you can look up the full documentation of available functions, classes, and arguments by typing `help(geovis)`, or checking out [the USER_MANUAL](../blob/master/USER_MANUAL.md).
+This brief introduction has only covered the most essential functionality of GeoVis. 
+If you need more information about or are experiencing problems with a particular function you can look up the full documentation of available functions, classes, and arguments by typing `help(geovis)`, or checking out [the USER_MANUAL](../master/USER_MANUAL.md).
 
 If you still need help, you can either [submit an issue](https://github.com/karimbahgat/geovis/issues) here on GitHub, or contact me directly at: karim.bahgat.norway@gmail.com
 

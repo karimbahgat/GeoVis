@@ -1,4 +1,4 @@
-# Documentation for Python Geographic Visualizer (GeoVis)
+# User Manual for Python Geographic Visualizer (GeoVis)
 
 **Version: 0.2.0**
 
