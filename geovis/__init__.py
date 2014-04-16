@@ -1657,12 +1657,6 @@ class _Renderer:
                 savebutton.img = tk.PhotoImage(data=saveimg).subsample(8,8)
                 savebutton["image"] = savebutton.img
                 savebutton.place(x=5, y=5, anchor="nw")
-                #test button for on-demand zoom
-                def zoomevent():
-                    SetMapZoom((-180,180),(-90,90))
-                    self._SaveRenderedShapefile("C:/Users/BIGKIMO/Desktop/livezoom.png")
-                zoombutton = tk.Button(window_frame, text="test zoom", command=zoomevent, relief="solid")
-                zoombutton.place(x=55, y=5, anchor="nw")
                 #open window
                 window.mainloop()
             tkthread = threading.Thread(target=ViewInTkinter)
@@ -2021,12 +2015,10 @@ This classifier is also needed to render a shapefile's legend.
             value = value[symboltype]
             #for each class test value for membership
             for eachclass in classes:
-                ### print uniqid, value, eachclass.min, eachclass.max, eachclass.classsymbol
                 #membership true if within minmax range of that class
                 if value >= eachclass._min and value <= eachclass._max:
                     #assign classsymbol
                     self.symbols[uniqid][symboltype] = eachclass.classsymbol
-                    ### print uniqid, value, eachclass.classsymbol
                     break
     def __AssignMembershipByIndex(self, classification):
         symboltype = classification.get("symboltype")
@@ -2036,12 +2028,10 @@ This classifier is also needed to render a shapefile's legend.
             value = value[symboltype]
             #for each class test value for membership
             for eachclass in classes:
-                ### print uniqid, value, eachclass.min, eachclass.max, eachclass.classsymbol
                 #membership true if within minmax range of that class
                 if index >= eachclass._min and index <= eachclass._max:
                     #assign classsymbol
                     self.symbols[uniqid][symboltype] = eachclass.classsymbol
-                    ### print uniqid, value, eachclass.classsymbol
                     break
     def __AssignMembershipByUnique(self, classification):
         symboltype = classification.get("symboltype")
@@ -2085,7 +2075,6 @@ Remember, with unique categories the symbolrange doesn't matter, and only works 
         sortedvalues = [value[symboltype] for uniqid,value in self.sortedvalues]
         #populate classes
         classes = []
-        print symboltype, classifytype
         #then set symbols
         olduniq = None
         for index, uniq in enumerate(sortedvalues):
@@ -2115,13 +2104,11 @@ Remember, with unique categories the symbolrange doesn't matter, and only works 
         #populate classes
         classmin = lowerbound
         classes = []
-        print symboltype, classifytype
         for index, classsymbol in enumerate(symbolrange):
             if index == nrclasses-1:
                 classmax = upperbound
             else:
                 classmax = classmin+intervalsize
-            print classmin, classmax, len(sortedvalues)
             #determine min and max value
             minvalue = classmin
             maxvalue = classmax
@@ -2144,13 +2131,11 @@ Remember, with unique categories the symbolrange doesn't matter, and only works 
         #populate classes
         classmin = 0
         classes = []
-        print symboltype, classifytype
         for index, classsymbol in enumerate(symbolrange):
             if index == nrclasses-1:
                 classmax = len(sortedvalues)-1
             else:
                 classmax = classmin+classsize
-            print classmin, classmax, len(sortedvalues)
             #determine min and max value
             minvalue = sortedvalues[classmin]
             maxvalue = sortedvalues[classmax]
@@ -2226,7 +2211,6 @@ Remember, with unique categories the symbolrange doesn't matter, and only works 
                 countNum -= 1
             return kclass
         #populate classes
-        print "in nrclasses",nrclasses
         highthresh = 1000
         if len(sortedvalues) > highthresh:
             #the idea of using random sampling for large datasets came from a blogpost by Carson Farmer. I just added the idea of calculating the breaks several times and using the sample means for the final break values.
@@ -2242,14 +2226,11 @@ Remember, with unique categories the symbolrange doesn't matter, and only works 
             jenksbreaks = [sum(allbreakvalues)/float(len(allbreakvalues)) for allbreakvalues in itertools.izip(*allrandomsamples)]
         else:
             jenksbreaks = getJenksBreaks(sortedvalues, nrclasses)
-        print "out",jenksbreaks
         breaksgen = (each for each in jenksbreaks[1:])
         classmin = lowerbound
         classes = []
-        print symboltype, classifytype
         for index, classsymbol in enumerate(symbolrange):
             classmax = next(breaksgen)
-            print classmin, classmax, len(sortedvalues)
             #determine min and max value
             minvalue = classmin
             maxvalue = classmax
