@@ -1,33 +1,24 @@
 
 REMAINING TASKS UNTIL NEXT RELEASE:
 
-- Add docstrings for all new features (REMAINING: AddLegend, AddText, DrawRectangle, DrawCircle, DrawLine, all the AskX functions, and the new excludequery and symbolizer and classifier options in newmap.AddToMap)
-- Reformat all docstrings to markdown format, so can easily be looped and written directly to a markdown documentation text file.
+--- DONE!
 
-- Add mapzoom, almost there except map/image proportions bc only the width has the priority and a long width can stretch image
-- fix error with drawing point symbolizer items when zooming
-- maybe move zoom shape test to renderer class instead of inside shapefile...
-- Maybe add a little thing indicating the imagesize, and a paranthesis with text if image was too big for screen so has been downsized just for viewing purposes.
-- Force mapdimensions to always be half eachothers size, so not to distort the map with screendims or manual user input
-- Add textsize factor option for AddLegend
-- Finally figure out legend functionality, how add legend to basic shapefiles(nonclassified), and how customize everything?
-- Change license type both in script, and in README
-- Fix normal (non-numpy) mapcoords error...
-
-- ADD TO DOCS HOW TO MAKE YOUR OWN LEGEND FROM SCRATCH...
-- ADD TO DOCS THAT IN PYCAIRO DRAWLINE IS ALWAYS BLACK, WEIRD ERROR, THUS PYCAIRO IS NOT FULLY SUPPORTED FOR X FEATURES...??? WHICH ONES? "PyCairo resulted in several errors that made it difficult to make compatible with all the other renderers, so support for it has been temporarily discontinued. All of the previous functions should work, but the new ones cannot be guaranteed."
-- ADD TO DOCS THAT PIL AND TKINTER DOES NOT SUPPORT OUTLINE WIDTH SO THEIR OUTLINES WILL ALWAYS BE 1 PIXEL THICK, SINCE THEY ONLY HAVE OUTLINE COLOR OPTION BUT NOT OUTLINEWIDTH OPTION...
-- ADD TO DOCS ABOUT PLAYING WITH SYMBOLS, AND THE AVAILABLE SYMBOL OPTIONS AND VALUES
-- ADD TO DOCS A PHILOSOPHY/SYNTAX SECTION
-- ADD TO DOCS A CONTRIBUTORS SECTION OF WHAT CONTRIBUTORS CAN HELP WITH (EG NEW SYMBOLIZERS OR MAKING LINES SMOOTHER BY USING A DRAWPATH), AND A DRAWING IN THE CONTRIBUTORS SECTION OF THE INNER WORKINGS OF GEOVIS AND WHERE THINGS COME FROM/PASS BY/GO TO.
 
 WAITING UNTIL NEXT TIME, ERRORS TO FIX:
 
+- Fix normal (non-numpy) mapcoords error...
+- Error with map/image proportions when zooming bc only the width has the priority and a long width can stretch image
 - CHECK OUT cntry_code categorical classification error
 - Make so if adding multiple classifications of same symboltype then replace the older one
+- Potential error with PIL if you installed PIL from source without libfreetype, as opposed to with an exe installer
+- Note that some parts of the symbology such as the outline may not always display as you might expect, since depending on the order of the shapefile features some shapes may be rendered on top of and blocking other shapes
 
 WAITING UNTIL NEXT TIME, FEATURES TO ADD:
 
+- ADD TO DOCS THAT PIL AND TKINTER DOES NOT SUPPORT OUTLINE WIDTH SO THEIR OUTLINES WILL ALWAYS BE 1 PIXEL THICK, SINCE THEY ONLY HAVE OUTLINE COLOR OPTION BUT NOT OUTLINEWIDTH OPTION...
+- ADD TO DOCS A CONTRIBUTORS SECTION OF WHAT CONTRIBUTORS CAN HELP WITH (EG NEW SYMBOLIZERS OR MAKING LINES SMOOTHER BY USING A DRAWPATH), AND A DRAWING IN THE CONTRIBUTORS SECTION OF THE INNER WORKINGS OF GEOVIS AND WHERE THINGS COME FROM/PASS BY/GO TO.
+- Figure out how add legend to basic shapefiles(nonclassified), and how manually customize everything?
+- Maybe add a little thing indicating the imagesize, and a paranthesis with text if image was too big for screen so has been downsized just for viewing purposes.
 - Is there a way to make classification sizes be mapped not linearly based on class rank, bur as percent of class midpoint compared to highest class midpoint (thus instead of interpolating symbolrange to nr of classes, interpolate to 100 percent and choose symbol index based on midpoint percent). Maybe that's what's known as proportional, except for all values instead of in classes. Use it by setting class2symbol="proportional" instead of "linear", or by saying proportional as classifytype. 
 - MAYBE DISCONTINUE SUPPORT FOR PYCAIRO...?
 - Maybe even change color interpolation to homebrewed blending based on stackoverflow answer. This would need rgb instead of hex so might require the Color() function to return the colour object with possibility to make into any of rgb, hex, hsv, etc. Reason, some might think HSV interpolation is prettier but it is also less intuitive depending on which color range is being used (eg blue to red will pass through green and yellow), pluss no reason to force it, user can still just add yellow or whatever else color in between if they want: http://stackoverflow.com/questions/10901085/python-range-values-to-pseudocolor

@@ -1,5 +1,13 @@
-Version 2.0 (...):
+Version 0.2.0 (April 15, 2014):
 
+- ADD TO DOCS ABOUT PLAYING WITH SYMBOLS, AND THE AVAILABLE SYMBOL OPTIONS AND VALUES
+- ADD TO DOCS A PHILOSOPHY/SYNTAX SECTION
+- Add textsize factor option for AddLegend
+- Change license type both in script, and in README
+- ADD TO DOCS THAT IN PYCAIRO DRAWLINE IS ALWAYS BLACK, WEIRD ERROR, THUS PYCAIRO IS NOT FULLY SUPPORTED FOR X FEATURES...??? WHICH ONES? "PyCairo resulted in several errors that made it difficult to make compatible with all the other renderers, so support for it has been temporarily discontinued. All of the previous functions should work, but the new ones cannot be guaranteed."
+- Force mapdimensions to always be half eachothers size, so not to distort the map with screendims or manual user input
+- Add docstrings for all new features (REMAINING: AddLegend, AddText, DrawRectangle, DrawCircle, DrawLine, all the AskX functions, and the new excludequery and symbolizer and classifier options in newmap.AddToMap)
+- Reformat all docstrings to markdown format, so can easily be looped and written directly to a markdown documentation text file.
 - Add simple way to render text, default font, and place it to relative xy location
 - Add an easy way for the user to automatically classify and visualize individual shapefile features based on their underlying data values. User can use different classifications for different symbol parts of the shapefile (eg size based on some numbers field and categorical based on some country field). Each feature's value will be mapped to a user-specifed range of numbers or colorgradient (for the cologradient the user only specifies the colorstops/endpoints).
 - Add fisher jenks classification, and optimized for large datasets
@@ -21,7 +29,7 @@ Version 2.0 (...):
 - Add Legend function, it simply needs to loop thru each class of the classifier and use the class options dictionary to create an exact copy in the legend.
 - Gave the save map button an image icon instead of just text
 
-Version 1.0 (25.February 2014):
+Version 0.1.0 (25.February 2014):
 
 - Basic functionality
 - One liners for shapefile viewing and map saving
