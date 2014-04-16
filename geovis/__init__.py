@@ -7,9 +7,52 @@ Python Geographic Visualizer (GeoVis)
 
 **Author: [Karim Bahgat](https://uit.academia.edu/KarimBahgat)**
 
-**Contact: karim.bahgat.norway<at>gmail.com**
+**Contact: karim.bahgat.norway@gmail.com**
 
 **Homepage: https://github.com/karimbahgat/geovis**
+
+## Table of Contents
+
+- [About](#about)
+  - [System Compatibility](#system-compatibility)
+  - [Dependencies](#dependencies)
+  - [License](#license)
+- [How GeoVis Works](#how-geovis-works)
+  - [Usage Philosophy](#usage-philosophy)
+  - [Screen Coordinate System](#screen-coordinate-system)
+  - [Stylizing Options](#stylizing-options)
+  - [Text Options](#text-options)
+  - [Available Text Fonts](#available-text-fonts)
+- [Functions and Classes](#functions-and-classes)
+  - [geovis.AskColor](#geovisaskcolor)
+  - [geovis.AskFieldName](#geovisaskfieldname)
+  - [geovis.AskNumber](#geovisasknumber)
+  - [geovis.AskShapefilePath](#geovisaskshapefilepath)
+  - [geovis.AskString](#geovisaskstring)
+  - [geovis.Color](#geoviscolor)
+  - [geovis.Layer](#geovislayer----class-object)
+    - [.AddClassification](#addclassification)
+  - [geovis.NewMap](#geovisnewmap----class-object)
+    - [.AddLegend](#addlegend)
+    - [.AddShape](#addshape)
+    - [.AddText](#addtext)
+    - [.AddToMap](#addtomap)
+    - [.DrawCircle](#drawcircle)
+    - [.DrawLine](#drawline)
+    - [.DrawRectangle](#drawrectangle)
+    - [.SaveMap](#savemap)
+    - [.ViewMap](#viewmap)
+  - [geovis.SaveShapefileImage](#geovissaveshapefileimage)
+  - [geovis.SetMapBackground](#geovissetmapbackground)
+  - [geovis.SetMapDimensions](#geovissetmapdimensions)
+  - [geovis.SetMapZoom](#geovissetmapzoom)
+  - [geovis.SetRenderingOptions](#geovissetrenderingoptions)
+  - [geovis.Shapefile](#geovisshapefile----class-object)
+    - [.ClearSelection](#clearselection)
+    - [.InvertSelection](#invertselection)
+    - [.SelectByQuery](#selectbyquery)
+  - [geovis.ShapefileFolder](#geovisshapefilefolder)
+  - [geovis.ViewShapefile](#geovisviewshapefile)
 
 ## About
 
@@ -87,11 +130,11 @@ offering the "customoptions" argument option).
 
 | __option__ | __description__ 
 | --- | --- 
-| fillsize | the size of a circle, square, pyramid, or the thickness of a line. Has no effect on polygon shapes. Int or float
-| fillwidth | currently only used for the width of a pyramid when using the pyramid symbolizer, int or float
+| fillsize | the size of a circle, square, pyramid, or the thickness of a line. Has no effect on polygon shapes. Given as proportion of the map size, so that a circle of size 0.10 will cover about 10 percent of the map. A float between 0 and 1
+| fillwidth | currently only used for the width of a pyramid when using the pyramid symbolizer. Given as proportion of the map size. A float between 0 and 1
 | fillheight | currently has no effect
 | fillcolor | the hex color of the fill
-| outlinewidth | the width of the outline if any, int or float
+| outlinewidth | the width of the outline if any, given as proportion of the fillsize. A float between 0 and 1
 | outlinecolor | the hex color of the outline
 
 ### Text Options
@@ -357,9 +400,10 @@ takes single set of coords, not multicoords
 class Shapefile:
     #builtins
     """
-Opens and reads a shapefile. Supports looping through it to extract one shape at a time, as a PyShpShape instance. Using it with a print function passes the filename, and measuring its len() returns the number of rows.
+Opens and reads a shapefile. Supports looping through it to extract one PyShpShape instance at a time. Using it with a print() function passes the filename, and measuring its len() returns the number of rows.
 
-| __options__ | __description__
+| __options__ | __description__ 
+| --- | --- 
 | shapefilepath | the filepath of the shapefile, including the .shp extension
 | showprogress | True if wanting to display a progressbar while looping through the shapefile (default), otherwise False (default)
 | progresstext | a textstring to print alongside the progressbar to help identify why it is being looped
@@ -517,7 +561,7 @@ Make a query selection on the shapefile so that only those features where the qu
         return self.selection
     def InvertSelection(self):
         """
-inverts the current selection
+Inverts the current selection
 """
         self.progresstext = "inverting selection for"
         oldselection = self.selection
@@ -526,7 +570,7 @@ inverts the current selection
         self.selection = tempselection
     def ClearSelection(self):
         """
-clears the current selection so that all shapes will be looped
+Clears the current selection so that all shapes will be looped
 """
         self.selection = False
 ##    def SplitByAttribute(self, fieldname):
@@ -1643,7 +1687,9 @@ def AskNumber(text="unknown task"):
     """
 Asks the user to interactively input a number (float or int) at any point in the script, and returns the input number.
 
-- *text: an optional string to identify for what purpose the chosen number will be used.
+| __option__ | __description__ 
+| --- | --- 
+| *text | an optional string to identify for what purpose the chosen number will be used.
 """
     def ValidateNumber(text):
         try:
@@ -1660,7 +1706,9 @@ def AskString(text="unknown task"):
     """
 Asks the user to interactively input a string at any point in the script, and returns the input string.
 
-- *text: an optional string to identify for what purpose the chosen string will be used.
+| __option__ | __description__ 
+| --- | --- 
+| *text | an optional string to identify for what purpose the chosen string will be used.
 """
     def ValidateString(text):
         try:
@@ -1679,7 +1727,9 @@ Pops up a temporary tk window asking user to visually choose a shapefile.
 Returns the chosen shapefile path as a text string. Also prints it as text in case
 the user wants to remember which shapefile was picked and hardcode it in the script.
 
-- *text: an optional string to identify what purpose the shapefile was chosen for when printing the result as text.
+| __option__ | __description__ 
+| --- | --- 
+| *text | an optional string to identify what purpose the shapefile was chosen for when printing the result as text.
 """
     tempwindow = tk.Tk()
     tempwindow.state("withdrawn")
@@ -1692,7 +1742,9 @@ def AskFieldName(shapefilepath, text="unknown task"):
 Loads and prints the available fieldnames of a shapefile, and asks the user which one to choose.
 Returns the chosen fieldname as a string.
 
-- *text: an optional string to identify for what purpose the chosen fieldname will be used.
+| __option__ | __description__ 
+| --- | --- 
+| *text | an optional string to identify for what purpose the chosen fieldname will be used.
 """
     tempshapefile = Shapefile(shapefilepath)
     print("valid fieldnames:")
@@ -1720,7 +1772,9 @@ Pops up a temporary tk window asking user to visually choose a color.
 Returns the chosen color as a hex string. Also prints it as text in case
 the user wants to remember which color was picked and hardcode it in the script.
 
-- *text: an optional string to identify what purpose the color was chosen for when printing the result as text.
+| __option__ | __description__ 
+| --- | --- 
+| *text | an optional string to identify what purpose the color was chosen for when printing the result as text.
 """
     def askcolor():
         tempwindow = tk.Tk()
@@ -1783,9 +1837,9 @@ Adds a classification/instruction to the layer on how to symbolize a particular 
 | valuefield | a string with the name of a shapefile attribute field whose values will be used to inform the classification. | string
 | symbolrange | a list or tuple of the range of symbol values that should be used for the symbol type being classified. You only need to assign the edge/breakpoints in an imaginary gradient of symbol values representing the transition from low to high value classes; the values in between will be interpolated if needed. The symbol values must be floats or integers when classifying a size-based symbol type, or hex color strings when classifying a color-based symbol type. | list or tuple
 | classifytype | a string with the name of the mathematical algorithm used to calculate the break points that separate the classes in the attribute values. | For valid classification type names see list below 
-| nrclasses | an integer or float for how many classes to subdivide the data and symbol values into. | Integer or float
+| nrclasses | an integer or float for how many classes to subdivide the data and symbol values into. | Integer or float  
 
-Valid names for the classifytype option are: 
+Valid names for the classifytype option are:  
 
 - __"categorical"__  
   Assigns a unique class/symbol color to each unique attribute value, so can only be used when classifying color-based symbol types
