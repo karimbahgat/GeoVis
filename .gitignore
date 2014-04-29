@@ -199,6 +199,7 @@ parts/
 var/
 sdist/
 develop-eggs/
+__private__/
 .installed.cfg
 
 # Installer logs

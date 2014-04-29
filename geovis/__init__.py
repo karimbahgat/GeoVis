@@ -182,7 +182,7 @@ They are:
 
 # IMPORTS
 #builtins
-import sys, os, itertools, array, random, math, platform, operator
+import sys, os, itertools, array, random, math, datetime, platform, operator
 import threading, Queue, multiprocessing
 import Tkinter as tk
 import tkFileDialog, tkColorChooser
@@ -334,6 +334,24 @@ every shapetype is always multi (upon entry) so have to be looped through when r
         else:
             entirerow = self._shapefile.record(self.id)
             return entirerow
+    def GetTime(self):
+        shapetime = dict()
+        for timeunit,timeunitfield in self._shapefile.timefields.iteritems():
+            if timeunitfield:
+                value = self.GetAttributes(fieldname=timeunitfield)
+            else:
+                value = timeunitfield
+            if timeunit in ("year","month","day"):
+                if value < 1:
+                    value = 1 #missing value for data, so set to 1
+            else:
+                if value < 0:
+                    value = 0 #missing value for data, so set to 0
+            shapetime.update([(timeunit,value)])
+        try:
+            return datetime.datetime(**shapetime)
+        except:
+            print(shapetime)
     def GetAvgCenter(self):
         """
 so far only simple nonnumpy
@@ -411,7 +429,7 @@ Opens and reads a shapefile. Supports looping through it to extract one PyShpSha
     def __init__(self, shapefilepath=None, showprogress="not specified", progresstext="looping shapefile"):
         self.showprogress = showprogress
         self.progresstext = progresstext
-        self.selection = False
+        self.selection = "all"
         if shapefilepath:
             self.shapefile = pyshp.Reader(shapefilepath)
             name = ".".join(shapefilepath.split(".")[:-1])
@@ -443,7 +461,7 @@ Opens and reads a shapefile. Supports looping through it to extract one PyShpSha
             #loop
             for shapeindex, shape in enumerate(SHAPEFILELOOP):
                 SHAPEFILELOOP.Increment()
-                if self.selection:
+                if self.selection != "all":
                     if shapeindex in self.selection:
                         pyshpshape = self._PrepShape(shapeindex, shape)
                         xmin,ymin,xmax,ymax = pyshpshape.bbox
@@ -457,7 +475,7 @@ Opens and reads a shapefile. Supports looping through it to extract one PyShpSha
         else:
             for shapeindex, shape in enumerate(SHAPEFILELOOP):
                 SHAPEFILELOOP.Increment()
-                if self.selection:
+                if self.selection != "all":
                     if shapeindex in self.selection:
                         pyshpshape = self._PrepShape(shapeindex, shape)
                         xmin,ymin,xmax,ymax = pyshpshape.bbox
@@ -572,10 +590,15 @@ Inverts the current selection
         """
 Clears the current selection so that all shapes will be looped
 """
-        self.selection = False
+        self.selection = "all"
 ##    def SplitByAttribute(self, fieldname):
 ##        self._UpdateShapefile()
 ##        pass
+    def AssignTime(self, yearfield=0, monthfield=1, dayfield=1, hourfield=0, minutefield=0, secondfield=0):
+        """
+Assigns a field to contain the time dimension of a shapefile. Used by the NewMap SaveTimeSequence method to determine the time of multiple shapefiles simultaneously.
+"""
+        self.shapefile.timefields = dict(year=yearfield,month=monthfield,day=dayfield,hour=hourfield,minute=minutefield,second=secondfield)
     #
     #INTERNAL USE ONLY
     def _UpdateShapefile(self):
@@ -1849,6 +1872,11 @@ Valid names for the classifytype option are:
             #create classifier if this is the first classification being added
             self.classifier = _Classifier()
         self.classifier.AddClassification(symboltype, valuefield, symbolrange=symbolrange, classifytype=classifytype, nrclasses=nrclasses)
+    def AssignTime(self, yearfield=0, monthfield=1, dayfield=1, hourfield=0, minutefield=0, secondfield=0):
+        """
+Assigns a field to contain the time dimension of a shapefile. Used by the NewMap SaveTimeSequence method to determine the time of multiple shapefiles simultaneously.
+"""
+        self.fileobj.AssignTime(yearfield=yearfield, monthfield=monthfield, dayfield=dayfield, hourfield=hourfield, minutefield=minutefield, secondfield=secondfield)
         
         
 #RENDERING OPTIONS
@@ -2588,6 +2616,38 @@ Save the map to an image file.
 | savepath | the string path for where you wish to save the map image. Image type extension must be specified ('.png','.gif',...)
 """
         self.renderer._SaveRenderedShapefile(savepath)
+    def SaveTimeSequence(self, timelayers, savefolder, starttime, endtime, timeinterval):
+        """
+Cycles through time at specified intervals, and saves map images displaying the shape features that match each of the given time periods.
+Note: In order for shapes to vary over time, their shapefiles must have been time-defined with the AssignTime method. No constant layers are currently allowed.
+
+Still experimental: Currently creates new map for each time period (so previous drawings or text won't show), and does not allow for constant layers...
+
+| __option__ | __description__ 
+| --- | --- 
+| timelayers | a list of time-enabled layer instances to draw across time. Layers can be time-enabled by using their AssignTime method.
+| savefolder | the string path for where you wish to save all the map images. Images are automatically saved as .png.
+| starttime | a datetime.datetime instance of where to start the time sequence
+| endtime | a datetime.datetime instance of where to end the time sequence, the timepoint itself will not be included
+| intervaltime | a datetime.timedelta instance of how much time to increase for each time frame in the sequence, ie how large of a timeperiod each map will represent
+"""
+        #first create folder if not exists
+        if not os.path.lexists(savefolder):
+            os.makedirs(savefolder)
+        #then loop through time
+        global curtimemin,curtimemax
+        curtimemin = starttime
+        curtimemax = starttime + timeinterval
+        while curtimemin < endtime:
+            newmap = NewMap()
+            for layer in timelayers:
+                shapefile = layer.fileobj
+                shapefile.SelectByQuery("shape.GetTime() >= curtimemin and shape.GetTime() < curtimemax")
+                newmap.AddToMap(layer)
+                shapefile.ClearSelection()
+            newmap.SaveMap(savefolder+"/"+str(curtimemin).replace("-","_").replace(":","_")+".png")
+            curtimemin += timeinterval
+            curtimemax += timeinterval
     ###INTERNAL USE ONLY
     def _AutoClassifyShapefile(self, layer):
         shapefilepath = layer.filepath
