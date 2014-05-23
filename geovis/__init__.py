@@ -322,6 +322,10 @@ every shapetype is always multi (upon entry) so have to be looped through when r
         convertedcoords = (self._MapCoords(eachmulti) for eachmulti in self.coords)
         formattedcoords = convertedcoords
         return (array.array("f",eachmulti) for eachmulti in formattedcoords)
+    def to_pydraw(self):
+        convertedcoords = (self._MapCoords(eachmulti) for eachmulti in self.coords)
+        formattedcoords = (self.__pairwise(eachmulti) for eachmulti in convertedcoords)
+        return (eachmulti for eachmulti in formattedcoords)
     def to_pycairo(self):
         convertedcoords = (self._MapCoords(eachmulti) for eachmulti in self.coords)
         formattedcoords = (self.__pairwise(eachmulti) for eachmulti in convertedcoords)
@@ -1127,6 +1131,229 @@ draw basic lines with outline, but nothing at start and end
         rightlinecoords.extend(peak)
         self.drawer.line(rightlinecoords, fill=options["outlinecolor"], width=options["outlinewidth"])
 
+class _Pydraw_Renderer:
+    """
+this class can be called on to draw each feature with pydraw as long as 
+it is given instructions via a color/size/options dictionary
+
+NOTE: this class is not yet finished, only supports polygons for now...
+"""
+    #NEED TO RECEIVE GENERATOR OF TRANSFORMED COORDS FROM MAPCANVAS
+    #ALSO NEEDS THE Aggdraw.Draw(img) OBJECT
+    def __init__(self):
+        global pydraw
+        import pydraw
+        self.sysfontfolders = dict([("windows","C:/Windows/Fonts/")])
+        self.fontfilenames = dict([("default", "TIMES.TTF"),
+                                   ("times new roman","TIMES.TTF"),
+                                   ("arial","ARIAL.TTF")])
+    def NewImage(self):
+        """
+this must be called before doing any rendering.
+Note: this replaces any previous image drawn on so be sure to
+retrieve the old image before calling it again to avoid losing work
+"""
+        #first mode
+        mode = "RGBA"
+        #then other specs
+        width = MAPWIDTH
+        height = MAPHEIGHT
+        background = MAPBACKGROUND
+        dimensions = (width, height)
+        self.img = pydraw.Image().new(width=width, height=height, background=background)
+        self.drawer = self.img
+    def RenderShape(self, shapeobj, options):
+        """
+looks at instructions in options to decide which draw method to use
+"""
+        multishapes = shapeobj.to_pydraw()
+        symbolizer = options.get("symbolizer")
+        if shapeobj.type == "polygon":
+            if symbolizer:
+                if symbolizer == "circle":
+                    centercoords = shapeobj.GetAvgCenter()
+                    self._BasicCircle(centercoords, options)
+                elif symbolizer == "square":
+                    centercoords = shapeobj.GetAvgCenter()
+                    self._BasicSquare(centercoords, options)
+                elif symbolizer == "pyramid":
+                    centercoords = shapeobj.GetAvgCenter()
+                    self._Pyramid(centercoords, options)
+            else:
+                for coords in multishapes:
+                    self._BasicPolygon(coords, options)
+        elif shapeobj.type == "line":
+            if symbolizer:
+                if symbolizer == "circle":
+                    centercoords = shapeobj.GetAvgCenter()
+                    self._BasicCircle(centercoords, options)
+                elif symbolizer == "square":
+                    centercoords = shapeobj.GetAvgCenter()
+                    self._BasicSquare(centercoords, options)
+                elif symbolizer == "pyramid":
+                    centercoords = shapeobj.GetAvgCenter()
+                    self._Pyramid(centercoords, options)
+            else:
+                for coords in multishapes:
+                    self._BasicLine(coords, options)
+        elif shapeobj.type == "point":
+            if symbolizer:
+                if symbolizer == "circle":
+                    for coords in multishapes:
+                        self._BasicCircle(coords, options)
+                elif symbolizer == "square":
+                    for coords in multishapes:
+                        self._BasicSquare(coords, options)
+                elif symbolizer == "pyramid":
+                    for coords in multishapes:
+                        self._Pyramid(coords, options)
+            else:
+                for coords in multishapes:
+                    self._BasicCircle(coords, options)
+    def RenderText(self, relx, rely, text, options):
+        if not options.get("texteffect"):
+            self._BasicText(relx, rely, text, options)
+    def RenderRectangle(self, upperleft, bottomright, customoptions):
+        leftrelx, uprely = upperleft
+        leftx,upy = (int(MAPWIDTH*leftrelx), int(MAPHEIGHT*uprely))
+        rightrelx, downrely = bottomright
+        rightx,downy = (int(MAPWIDTH*rightrelx), int(MAPHEIGHT*downrely))
+        rectanglecoords = [leftx,upy, rightx,upy, rightx,downy, leftx,downy, leftx,upy]
+        self._BasicPolygon(rectanglecoords, customoptions)
+    def RenderCircle(self, relx, rely, fillsize, customoptions):
+        customoptions["fillsize"] = fillsize
+        x = int(MAPWIDTH*relx)
+        y = int(MAPHEIGHT*rely)
+        self._BasicCircle((x,y), customoptions)
+    def RenderLine(self, startpos, stoppos, customoptions):
+        startrelx, startrely = startpos
+        startxy = [int(MAPWIDTH*startrelx), int(MAPHEIGHT*startrely)]
+        stoprelx, stoprely = stoppos
+        stopxy = [int(MAPWIDTH*stoprelx), int(MAPHEIGHT*stoprely)]
+        linecoords = startxy
+        linecoords.extend(stopxy)
+        self._BasicLine(linecoords, customoptions)
+    def GetImage(self):
+        return pydraw._tkimage()
+    def SaveImage(self, savepath):
+        self.img.save(savepath)
+
+    #Internal use only
+    def _BasicText(self, relx, rely, text, options):
+        """
+draws basic text, no effects
+"""
+        fontlocation = self.sysfontfolders[OSSYSTEM]+self.fontfilenames[options["textfont"]]
+        font = aggdraw.Font(color=options["textcolor"], file=fontlocation, size=options["textsize"], opacity=options["textopacity"])
+        fontwidth, fontheight = self.drawer.textsize(text, font)
+        textanchor = options.get("textanchor")
+        if textanchor:
+            textanchor = textanchor.lower()
+            if textanchor == "center":
+                x = int(MAPWIDTH*relx) - int(fontwidth/2.0)
+                y = int(MAPHEIGHT*rely) - int(fontheight/2.0)
+            else:
+                x = int(MAPWIDTH*relx) - int(fontwidth/2.0)
+                y = int(MAPHEIGHT*rely) - int(fontheight/2.0)
+                if "n" in textanchor:
+                    y = int(MAPHEIGHT*rely)
+                elif "s" in textanchor:
+                    y = int(MAPHEIGHT*rely) - int(fontheight)
+                if "e" in textanchor:
+                    x = int(MAPWIDTH*relx) - int(fontwidth)
+                elif "w" in textanchor:
+                    x = int(MAPWIDTH*relx)
+        if options.get("textboxfillcolor") or options.get("textboxoutlinecolor"):
+            relfontwidth, relfontheight = (fontwidth/float(MAPWIDTH), fontheight/float(MAPHEIGHT))
+            relxmid,relymid = (x/float(MAPWIDTH)+relfontwidth/2.0,y/float(MAPHEIGHT)+relfontheight/2.0)
+            relupperleft = (relxmid-relfontwidth*options["textboxfillsize"]/2.0, relymid-relfontheight*options["textboxfillsize"]/2.0)
+            relbottomright = (relxmid+relfontwidth*options["textboxfillsize"]/2.0, relymid+relfontheight*options["textboxfillsize"]/2.0)
+            options["fillcolor"] = options["textboxfillcolor"]
+            options["outlinecolor"] = options["textboxoutlinecolor"]
+            options["outlinewidth"] = options["textboxoutlinewidth"]
+            self.RenderRectangle(relupperleft, relbottomright, options)
+        self.drawer.text((x,y), text, font)
+    def _BasicLine(self, coords, options):
+        """
+draw basic lines with outline, but nothing at start and end
+"""
+        #first draw outline line
+        if options["outlinecolor"]:
+            outlinepen = aggdraw.Pen(options["outlinecolor"], options["fillsize"]+options["outlinewidth"])
+            self.drawer.line(coords, outlinepen)
+        #then draw fill line which is thinner
+        if options["fillcolor"]:
+            fillpen = aggdraw.Pen(options["fillcolor"], options["fillsize"])
+            self.drawer.line(coords, fillpen)
+    def _BasicPolygon(self, coords, options):
+        """
+draw polygon with color fill
+"""
+        self.drawer.drawpolygon(coords, fillcolor=options["fillcolor"], outlinecolor=options["outlinecolor"], outlinewidth=options["outlinewidth"], outlinejoinstyle=None)
+    def _BasicCircle(self, coords, options):
+        """
+draw points with a symbol path representing a circle
+"""
+        #build circle
+        size = int(options["fillsize"]/2.0)
+        x,y = coords
+        circlecoords = (x-size, y-size, x+size, y+size)
+        #set symbol options
+        args = []
+        if options["fillcolor"]:
+            fillbrush = aggdraw.Brush(options["fillcolor"])
+            args.append(fillbrush)
+        if options["outlinecolor"]:
+            outlinepen = aggdraw.Pen(options["outlinecolor"], options["outlinewidth"])
+            args.append(outlinepen)
+        #draw
+        self.drawer.ellipse(circlecoords, *args)
+    def _BasicSquare(self, coords, options):
+        """
+draw points with a symbol path representing a square
+"""
+        #build circle
+        size = int(options["fillsize"]/2.0)
+        x,y = coords
+        squarecoords = (x-size, y-size, x+size, y+size)
+        #set symbol options
+        args = []
+        if options["fillcolor"]:
+            fillbrush = aggdraw.Brush(options["fillcolor"])
+            args.append(fillbrush)
+        if options["outlinecolor"]:
+            outlinepen = aggdraw.Pen(options["outlinecolor"], options["outlinewidth"])
+            args.append(outlinepen)
+        #draw
+        self.drawer.rectangle(squarecoords, *args)
+    def _Pyramid(self, coords, options):
+        """
+draw basic lines with outline, but nothing at start and end.
+"""
+        if options["outlinecolor"]:
+            size = int(options["fillsize"])
+            width = int(options["fillwidth"]) #pxls
+            #calculate three pyramid coords
+            x,y = coords
+            leftbase = [x-int(width/2.0), y]
+            peak = [x, y-size]
+            rightbase = [x+int(width/2.0), y]
+            #first draw left line
+            leftlinecoords = list(leftbase)
+            leftlinecoords.extend(peak)
+            outlinepen = aggdraw.Pen(options["outlinecolor"], options["outlinewidth"])
+            self.drawer.line(leftlinecoords, outlinepen)
+            #then draw right line
+            rightlinecoords = list(rightbase)
+            rightlinecoords.extend(peak)
+            outlinepen = aggdraw.Pen(options["outlinecolor"], options["outlinewidth"])
+            self.drawer.line(rightlinecoords, outlinepen)
+    def _PyramidScape(self, coords, options):
+        """
+similar to pyramid, except pyramids stretch across all of map horizontally at specified y interval, and goes up and down by aggregating all values in each x area of its respective y range.
+"""
+        pass
+
 class _Aggdraw_Renderer:
     """
 this class can be called on to draw each feature with aggdraw as long as 
@@ -1526,6 +1753,8 @@ class _Renderer:
             self.renderer = _TkCanvas_Renderer()
         elif RENDERER == "PIL":
             self.renderer = _PIL_Renderer()
+        elif RENDERER == "pydraw":
+            self.renderer = _Pydraw_Renderer()
         elif RENDERER == "aggdraw":
             self.renderer = _Aggdraw_Renderer()
         elif RENDERER == "pycairo":
