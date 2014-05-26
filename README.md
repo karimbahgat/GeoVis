@@ -73,8 +73,10 @@ and modify according to the MIT license, see license.txt
 ## Getting Started
 
 ### Installation
-1. Download the GeoVis repository folder from GitHub.
-2. Either a or b:
+1. Download GeoVis, from either a or b:
+  - a) The most recent stable version from [the releases page](https://github.com/karimbahgat/GeoVis/releases) (Recommended).
+  - b) The "bleeding edge" version using the "download zip" button to the right of the main repository folder.
+2. Install it, using either a or b:
   - a) Place the geovis folder in you Python site-packages folder for a "permanent" installation.
   - b) Or begin each session by typing `import sys` and `sys.path.append("folder path where the geovis folder is located")`.
 
