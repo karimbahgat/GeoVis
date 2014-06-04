@@ -13,10 +13,10 @@ import geovis
 #SETUP
 ############
 #setup rendering options
-geovis.SetRenderingOptions(renderer="aggdraw", numpyspeed=True, reducevectors=False)
+geovis.SetRenderingOptions(renderer="PIL", numpyspeed=False, reducevectors=False)
 #create map
 geovis.SetMapBackground(geovis.Color("blue", brightness=0.9))
-geovis.SetMapZoom(x2x=[0,180],y2y=[0,90])
+geovis.SetMapZoom(x2x=[-180,0],y2y=[-90,0])
 newmap = geovis.NewMap()
 
 ############

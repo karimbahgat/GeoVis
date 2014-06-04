@@ -417,7 +417,21 @@ takes single set of coords, not multicoords
                     newpoint = [newx,newy]
                     outcoords.extend(newpoint)
             return outcoords
-        
+class _GeojShape(_PyShpShape):
+    def __init__(self, geojson):
+        #not finished, only barely works with polygons and multipolygons
+        self.geojson = geojson
+        _type = geojson["type"]
+        if _type == "Polygon":
+            self.coords = [geojson["coordinates"][0]]
+            self.type = "polygon"
+        elif _type == "MultiPolygon":
+            self.coords = [eachmulti[0] for eachmulti in geojson["coordinates"]]
+            self.type = "polygon"
+        elif _type == "Point":
+            x,y = self.coords[0][0]
+            bbox = [x,y,x,y]
+            self.bbox = bbox
 
 class Shapefile:
     #builtins
@@ -929,8 +943,8 @@ retrieve the old image before calling it again to avoid losing work
             MAPHEIGHT = MAPHEIGHT*2
             _UpdateMapDims()
             self.upscaled = True
-        width = MAPWIDTH
-        height = MAPHEIGHT
+        width = int(MAPWIDTH)
+        height = int(MAPHEIGHT)
         background = MAPBACKGROUND
         dimensions = (width, height)
         self.img = PIL.Image.new(mode, dimensions, background)
@@ -1377,8 +1391,8 @@ retrieve the old image before calling it again to avoid losing work
         #first mode
         mode = "RGBA"
         #then other specs
-        width = MAPWIDTH
-        height = MAPHEIGHT
+        width = int(MAPWIDTH)
+        height = int(MAPHEIGHT)
         background = MAPBACKGROUND
         dimensions = (width, height)
         self.img = PIL.Image.new(mode, dimensions, background)
@@ -2610,6 +2624,8 @@ This adds an individual shape instead of an entire file.
 | **customoptions | any number of named arguments to style the shape
 """
         customoptions = _CheckOptions(customoptions)
+        if hasattr(shapeobj, "__geo_interface__"):
+            shapeobj = _GeojShape(shapeobj.__geo_interface__)
         self.renderer._RenderShape(shapeobj, customoptions)
     def AddToMap(self, layer):
         """
