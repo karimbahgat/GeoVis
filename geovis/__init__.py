@@ -924,7 +924,9 @@ it is given instructions via a color/size/options dictionary
         global PIL
         import PIL, PIL.Image, PIL.ImageDraw, PIL.ImageTk, PIL.ImageFont
         self.upscaled = False
-        self.sysfontfolders = dict([("windows","C:/Windows/Fonts/")])
+        self.sysfontfolders = dict([("windows","C:/Windows/Fonts/"),
+                                    ("darwin", "/Library/Fonts/"),
+                                    ("linux", "/usr/share/fonts/truetype/") ])
         self.fontfilenames = dict([("default", "TIMES.TTF"),
                                    ("times new roman","TIMES.TTF"),
                                    ("arial","ARIAL.TTF")])
@@ -1157,7 +1159,9 @@ NOTE: this class is not yet finished, only supports polygons for now...
     def __init__(self):
         global pydraw
         import pydraw
-        self.sysfontfolders = dict([("windows","C:/Windows/Fonts/")])
+        self.sysfontfolders = dict([("windows","C:/Windows/Fonts/"),
+                                    ("darwin", "/Library/Fonts/"),
+                                    ("linux", "/usr/share/fonts/truetype/") ])
         self.fontfilenames = dict([("default", "TIMES.TTF"),
                                    ("times new roman","TIMES.TTF"),
                                    ("arial","ARIAL.TTF")])
@@ -1378,7 +1382,9 @@ it is given instructions via a color/size/options dictionary
     def __init__(self):
         global aggdraw, PIL
         import aggdraw, PIL, PIL.Image, PIL.ImageDraw, PIL.ImageTk
-        self.sysfontfolders = dict([("windows","C:/Windows/Fonts/")])
+        self.sysfontfolders = dict([("windows","C:/Windows/Fonts/"),
+                                    ("darwin", "/Library/Fonts/"),
+                                    ("linux", "/usr/share/fonts/truetype/") ])
         self.fontfilenames = dict([("default", "TIMES.TTF"),
                                    ("times new roman","TIMES.TTF"),
                                    ("arial","ARIAL.TTF")])
